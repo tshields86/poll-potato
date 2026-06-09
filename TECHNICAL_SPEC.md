@@ -61,9 +61,19 @@ vote
 ```
 
 **Integrity constraints (the important part):**
-- Signed-in, single-choice: unique `(poll_id, user_id)`.
-- Anonymous, single-choice: unique `(poll_id, voter_token)`.
-- When `allow_multiple` is true, uniqueness is `(poll_id, user_id, option_id)` / `(poll_id, voter_token, option_id)` so a voter can pick several options but not the same one twice.
+
+Enforcement is intentionally split between Postgres and `castVote`. The single-choice rules depend on `poll.allow_multiple`, which lives in another table and can't be referenced by a Postgres partial index without a trigger or a denormalized column — so we put what we can in the DB and let the server action handle the rest.
+
+*DB-enforced (partial unique indexes on `vote`):*
+- `(poll_id, user_id, option_id)` where `user_id is not null` — a signed-in voter cannot vote for the same option twice in the same poll.
+- `(poll_id, voter_token, option_id)` where `voter_token is not null` — same for anonymous voters.
+
+*App-enforced (in `castVote`, M4):*
+- Single-choice (`allow_multiple = false`) → one vote per `(poll, identity)`. The server action deletes any prior vote for that identity in the same poll, then inserts the new one, wrapped in a Neon HTTP batched transaction so changing your vote is atomic.
+- Multi-choice (`allow_multiple = true`) → the voter can pick several options but not the same one twice (caught by the DB indexes above).
+
+The narrow race window (same user, two tabs, simultaneous single-choice votes) is accepted for v1. If it ever shows up in real data, dropping in a `BEFORE INSERT` trigger on `vote` that consults `poll.allow_multiple` closes it without any app-side change.
+
 - `vote_count` on `poll_option` is the read path; it is updated transactionally with each insert/delete. Treat the `vote` rows as the source of truth and `vote_count` as a cache that can be recomputed.
 
 ## 4. Auth flows (Neon Auth + our own anonymous token)
