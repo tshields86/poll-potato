@@ -1,0 +1,15 @@
+/**
+ * Minimal Workers config for the M2 smoke test. Real deployment config
+ * (domains, secrets, observability) lands in M8.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "poll-potato",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  }
+}
