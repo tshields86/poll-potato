@@ -1,36 +1,39 @@
 import { cookies } from "next/headers";
 import { auth } from "./auth/server";
 
+export const VOTER_COOKIE = "pp_voter_token";
+export const CREATOR_COOKIE = "pp_creator_token";
+
 export type Identity =
-  | { kind: "user"; userId: string; voterToken?: string; creatorToken?: string }
-  | { kind: "anonymous"; voterToken: string; creatorToken: string };
+  | {
+      kind: "user";
+      userId: string;
+      voterToken?: string;
+      creatorToken?: string;
+    }
+  | {
+      kind: "anonymous";
+      voterToken: string | undefined;
+      creatorToken: string | undefined;
+    };
 
 /**
  * Returns the active identity for the current request.
- * - Signed-in users: `kind: "user"` with their Neon Auth `user.id`. The anon
- *   cookies (if present from before sign-up) are returned alongside so callers
- *   can run a one-time claim of prior polls/votes.
- * - Anonymous users: `kind: "anonymous"` with the long-lived cookies that
- *   proxy.ts mints on first request.
  *
- * Throws if the anonymous cookies are unexpectedly missing — that would mean
- * proxy.ts didn't run, which is a configuration bug, not a user-facing error.
+ * Anonymous cookies (`pp_voter_token`, `pp_creator_token`) are minted lazily
+ * by server actions that need them (see `ensureAnonymousIdentity`) — they may
+ * be absent on a first GET. Callers that *must* have a token (e.g. casting
+ * a vote, creating a poll) should call `ensureAnonymousIdentity` first.
  */
 export async function getIdentity(): Promise<Identity> {
   const session = await auth.getSession();
   const user = session.data?.user;
   const c = await cookies();
-  const voterToken = c.get("pp_voter_token")?.value;
-  const creatorToken = c.get("pp_creator_token")?.value;
+  const voterToken = c.get(VOTER_COOKIE)?.value;
+  const creatorToken = c.get(CREATOR_COOKIE)?.value;
 
   if (user) {
     return { kind: "user", userId: user.id, voterToken, creatorToken };
-  }
-
-  if (!voterToken || !creatorToken) {
-    throw new Error(
-      "Missing anonymous identity cookies — proxy.ts should have minted them.",
-    );
   }
   return { kind: "anonymous", voterToken, creatorToken };
 }
