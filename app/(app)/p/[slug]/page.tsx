@@ -9,13 +9,37 @@ export const dynamic = "force-dynamic";
 type Params = { slug: string };
 type SearchParams = { "just-created"?: string };
 
-export async function generateMetadata({ params }: { params: Promise<Params> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
   const { slug } = await params;
   const poll = await getPoll(slug);
-  if (!poll) return { title: "Poll not found · PollPotato" };
+  if (!poll) {
+    return { title: "Poll not found · PollPotato", robots: { index: false } };
+  }
+  const title = `${poll.question} · PollPotato`;
+  const description = poll.isClosed
+    ? "See how the group voted."
+    : "Cast your vote — share the link, settle it fast.";
+  const url = `/p/${slug}`;
   return {
-    title: `${poll.question} · PollPotato`,
-    description: "Cast your vote on PollPotato.",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "PollPotato",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    alternates: { canonical: url },
   };
 }
 
