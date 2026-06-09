@@ -1,26 +1,149 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #F1F2FB;
+  --surface: #FFFFFF;
+  --ink: #211B4E;
+  --ink-soft: #5F5A8A;
+  --line: #E6E5F4;
+  --primary: #4F46E5;
+  --primary-soft: #EAE8FC;
+  --bar: #4F46E5;
+  --bar-track: #ECECF6;
+  --mark: #C9F25C;
+  --mark-ink: #27340A;
+  --frame: #211B4E;
+  --shadow: 33 27 78 / 0.12;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary-foreground: #FFFFFF;
+  --secondary: var(--primary-soft);
+  --secondary-foreground: var(--ink);
+  --muted: var(--primary-soft);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--mark);
+  --accent-foreground: var(--mark-ink);
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--primary);
+  --radius: 0.875rem;
+}
+
+.dark {
+  --paper: #100E24;
+  --surface: #1B1840;
+  --ink: #ECEAFF;
+  --ink-soft: #A09BD2;
+  --line: #2D2956;
+  --primary: #938CFF;
+  --primary-soft: #272358;
+  --bar: #7E75FF;
+  --bar-track: #262252;
+  --mark: #C9F25C;
+  --mark-ink: #16210A;
+  --frame: #0A091C;
+  --shadow: 0 0 0 / 0.45;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary-foreground: #0F0C2A;
+  --secondary: var(--primary-soft);
+  --secondary-foreground: var(--ink);
+  --muted: var(--primary-soft);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--mark);
+  --accent-foreground: var(--mark-ink);
+  --destructive: #F87171;
+  --destructive-foreground: #1A0A0A;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--primary);
 }
 
 @theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-bar: var(--bar);
+  --color-bar-track: var(--bar-track);
+  --color-mark: var(--mark);
+  --color-mark-ink: var(--mark-ink);
+  --color-frame: var(--frame);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: var(--font-bricolage), "Hanken Grotesk", system-ui, sans-serif;
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-hanken), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
