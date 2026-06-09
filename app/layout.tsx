@@ -22,10 +22,33 @@ const spaceMono = Space_Mono({
   display: "swap",
 });
 
+const SITE_URL = process.env.PP_SITE_URL ?? "https://pollpotato.com";
+
 export const metadata: Metadata = {
-  title: "PollPotato — settle it, fast",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "PollPotato — settle it, fast",
+    template: "%s · PollPotato",
+  },
   description:
     "Spin up a poll in ten seconds, share one link, watch the votes roll in.",
+  applicationName: "PollPotato",
+  authors: [{ name: "PollPotato" }],
+  keywords: ["poll", "polls", "voting", "quick poll", "online poll", "PollPotato"],
+  openGraph: {
+    type: "website",
+    siteName: "PollPotato",
+    title: "PollPotato — settle it, fast",
+    description:
+      "Spin up a poll in ten seconds, share one link, watch the votes roll in.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PollPotato — settle it, fast",
+    description: "Spin up a poll, share a link, watch the votes roll in.",
+  },
+  alternates: { canonical: "/" },
 };
 
 export const viewport: Viewport = {
