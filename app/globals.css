@@ -137,6 +137,25 @@ body {
   border-radius: 6px;
 }
 
+@keyframes pp-bob {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50%      { transform: rotate(-3deg) translateY(-6px); }
+}
+
+@keyframes pp-hop {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-9px) rotate(3deg); }
+}
+
+.pp-mascot-bob {
+  transform: rotate(-5deg);
+  animation: pp-bob 3.4s ease-in-out infinite;
+}
+
+.pp-mascot-hop {
+  animation: pp-hop 0.9s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
