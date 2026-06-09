@@ -4,7 +4,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 
-export function GoogleButton({ callbackURL = "/app" }: { callbackURL?: string }) {
+export function GoogleButton({ callbackURL = "/auth/callback" }: { callbackURL?: string }) {
   const [pending, setPending] = useState(false);
 
   async function onClick() {

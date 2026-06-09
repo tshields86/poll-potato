@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
+import { claimAnonymousIdentity } from "@/lib/identity-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -20,11 +21,13 @@ export function SignInForm({ callbackURL = "/app" }: { callbackURL?: string }) {
     const password = String(form.get("password") ?? "");
 
     const result = await authClient.signIn.email({ email, password, callbackURL });
-    setPending(false);
     if (result.error) {
+      setPending(false);
       setError(result.error.message ?? "Couldn't sign you in. Check your details and try again.");
       return;
     }
+    await claimAnonymousIdentity().catch(() => null);
+    setPending(false);
     router.push(callbackURL);
     router.refresh();
   }

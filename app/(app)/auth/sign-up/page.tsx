@@ -25,7 +25,7 @@ export default async function SignUpPage() {
       </p>
 
       <div className="mt-6">
-        <GoogleButton callbackURL="/app" />
+        <GoogleButton />
       </div>
 
       <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">

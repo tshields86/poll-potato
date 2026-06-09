@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
+import { claimAnonymousIdentity } from "@/lib/identity-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -26,11 +27,13 @@ export function SignUpForm({ callbackURL = "/app" }: { callbackURL?: string }) {
       password,
       callbackURL,
     });
-    setPending(false);
     if (result.error) {
+      setPending(false);
       setError(result.error.message ?? "Couldn't create your account. Try a different email.");
       return;
     }
+    await claimAnonymousIdentity().catch(() => null);
+    setPending(false);
     router.push(callbackURL);
     router.refresh();
   }
