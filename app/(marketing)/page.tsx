@@ -14,7 +14,7 @@ export default function MarketingHome() {
 
       <div className="mt-7 flex flex-wrap items-center gap-4">
         <Link
-          href="/app"
+          href="/app/create"
           className="inline-flex items-center rounded-[14px] bg-primary px-6 py-3.5 font-display text-base font-bold text-primary-foreground transition-[filter,transform] hover:-translate-y-px hover:brightness-110"
         >
           Start a poll
