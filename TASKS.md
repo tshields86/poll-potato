@@ -22,12 +22,13 @@ Work top to bottom. Each milestone has an acceptance check — don't move on unt
 - **Acceptance:** can read/write all three tables locally against Neon; constraints reject duplicate votes.
 
 ## M2 — Auth
-- [ ] Install Better Auth; generate its tables in Neon.
-- [ ] Enable email/password, Google OAuth, and the anonymous plugin.
-- [ ] Mint stable `voter_token` / `creator_token` cookies for anonymous identity.
-- [ ] Build sign-up / sign-in / sign-out UI (themed).
-- [ ] On sign-up, migrate anonymous polls/votes (by token) to the new `user_id`.
-- **Acceptance:** can sign up and in with email and Google; an anonymous user gets a stable token; signing up keeps their prior polls/votes.
+- [ ] **First, verify Neon Auth on Cloudflare Workers:** enable Neon Auth in the Neon Console, wire the minimal `createNeonAuth()` setup, and confirm it builds and runs under OpenNext on Workers (a sign-in round-trip works in a Workers preview). If it does NOT work cleanly, stop and switch to self-hosted Better Auth (same library, same data model below) before continuing — note the decision in the repo.
+- [ ] Configure Neon Auth: `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` (32+ chars); set up `@neondatabase/auth/next` (client) and `@neondatabase/auth/next/server` (server).
+- [ ] Enable email/password and Google for registered users; confirm users sync into the Neon Auth users table.
+- [ ] Build themed sign-up / sign-in / sign-out UI.
+- [ ] Mint stable `voter_token` / `creator_token` httpOnly cookies for anonymous identity (this is our own layer, independent of Neon Auth).
+- [ ] On sign-up, migrate anonymous polls/votes (by token) to the new Neon Auth `user_id`.
+- **Acceptance:** Neon Auth (or the Better Auth fallback) runs on Workers; can sign up/in with email and Google; an anonymous user gets a stable token and can vote without signing up; signing up keeps their prior polls/votes.
 
 ## M3 — Create a poll
 - [ ] Build the Create screen per the mock (question, add/remove/reorder options, settings toggles).
@@ -64,7 +65,7 @@ Work top to bottom. Each milestone has an acceptance check — don't move on unt
 
 ## M8 — Deploy to Cloudflare
 - [ ] Add `@opennextjs/cloudflare`; configure `wrangler` and the OpenNext build.
-- [ ] Wire env/secrets (Neon URL, Better Auth, Google OAuth) in Cloudflare.
+- [ ] Wire env/secrets (Neon `DATABASE_URL`, Neon Auth base URL + cookie secret, Google OAuth) in Cloudflare.
 - [ ] Set up domains: `pollpotato.com` (marketing) and `app.pollpotato.com` (app).
 - [ ] Confirm the Worker bundle is under the size limit; trim if needed.
 - [ ] Set up CI deploy (e.g. GitHub Actions running the OpenNext build).

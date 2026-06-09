@@ -33,14 +33,14 @@ Use `poll-potato` everywhere tooling expects an identifier; use "PollPotato" eve
 - **Styling:** Tailwind CSS + shadcn/ui, **heavily themed** to the tokens below. Use `next-themes` for light/dark. Do not ship default shadcn styling — it must look like the mock, not like stock shadcn.
 - **Database:** Neon (serverless Postgres). Use the **Neon serverless driver** (`@neondatabase/serverless`), which speaks HTTP/WebSocket. This is required because Cloudflare Workers cannot open raw TCP connections — do not use `node-postgres`/`pg` with a direct TCP connection.
 - **ORM:** Drizzle. The Drizzle schema is the source of truth for the database; migrations are checked in.
-- **Auth:** Better Auth — email/password, Google OAuth, and the **anonymous** plugin. Users and sessions live in Neon.
+- **Auth:** **Neon Auth** — Neon's managed authentication, which is Better Auth hosted by Neon and auto-synced into your Postgres. Use it for registered users: email/password and Google OAuth. Configure via the Neon Console (`NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`); SDKs are `@neondatabase/auth/next` (client) and `@neondatabase/auth/next/server` (`createNeonAuth()`). **Anonymous voting does NOT go through Neon Auth** — it uses our own `voter_token` cookie (see TECHNICAL_SPEC.md), so the "no sign-up to vote" flow is the same regardless of auth provider. **Fallback:** if Neon Auth doesn't deploy cleanly on Cloudflare Workers (verify this first — see TASKS.md M2), drop to self-hosted Better Auth, which is the same library and known to work on Workers; the data model and concepts carry over unchanged.
 - **Hosting:** Cloudflare Workers via `@opennextjs/cloudflare` (OpenNext). Local dev uses standard `next dev`.
 
 Rationale lives in `TECHNICAL_SPEC.md`. The guiding theme is **"free as long as possible"**: Neon scales to zero (no pausing/archiving of inactive projects), and Cloudflare's free tier permits commercial use with unmetered bandwidth.
 
 ## Portability rule (important)
 
-We start on Cloudflare, but the app must stay portable. **Do not use host-proprietary services** (no Vercel KV/Postgres/Blob; avoid Cloudflare-only primitives we can't replace). Keep state in Neon and logic in standard Next.js. The only Cloudflare-specific surface should be the OpenNext build/deploy config. This keeps a future move (or a native backend) cheap.
+We start on Cloudflare, but the app must stay portable. **Do not use host-proprietary services** (no Vercel KV/Postgres/Blob; avoid Cloudflare-only primitives we can't replace). Keep state in Neon and logic in standard Next.js. The two intentional exceptions are the OpenNext build/deploy config (Cloudflare) and Neon Auth (Neon) — both are accepted because we're committed to Neon and Cloudflare anyway. Auth is the one place we trade some portability for less work; the escape hatch is that Neon Auth is just managed Better Auth, so moving to self-hosted Better Auth later is a swap within the same library, not a rewrite. Everything else stays host- and DB-agnostic.
 
 ## Design system (source of truth: the approved mock)
 

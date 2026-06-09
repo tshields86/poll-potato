@@ -14,17 +14,18 @@ Companion to `CLAUDE.md`. This defines *what* to build and *how* the pieces fit.
 
 - A single Next.js (App Router) codebase serves both the **marketing site** (`pollpotato.com`) and the **app** (`app.pollpotato.com`). Split by route group: `(marketing)` and `(app)`. The marketing routes are static/ISR for SEO; the app routes are dynamic.
 - Data lives in **Neon Postgres**, accessed via **Drizzle** over the **Neon serverless driver** (HTTP). No raw TCP — required for Cloudflare Workers.
-- **Better Auth** handles identity (anonymous, email/password, Google), storing users/sessions in Neon.
+- **Neon Auth** handles registered-user identity (email/password, Google) — it's managed Better Auth, hosted by Neon and synced into our Postgres. Anonymous voting is handled separately by our own `voter_token` cookie, not the auth provider (see §4).
 - Deployed to **Cloudflare Workers** via **OpenNext** (`@opennextjs/cloudflare`).
 
 ### Free-tier constraints to design within
 - Neon free: 0.5 GB storage, scales to zero on idle and wakes on the next request (~300–500ms cold start; no manual restore, no archiving). Expect occasional cold starts; don't hold connections open in a way that defeats scale-to-zero.
 - Cloudflare Workers free: 100,000 requests/day, 10ms CPU per invocation, unmetered bandwidth, **3 MB compressed Worker size limit**. Keep the bundle lean. Static asset requests don't count against the request limit; only dynamic/function calls do.
 - These limits are generous for an early app. The likely first paid step is Cloudflare Workers Paid ($5/mo, 10 MB Worker) if the bundle grows — not a request-volume problem.
+- Neon Auth is free up to ~60,000 monthly active users on Neon's free plan (1M is the broader ceiling) — far beyond early needs. Note "active users" here means *registered* users who authenticate; anonymous voters use a cookie token and don't count.
 
 ## 3. Data model (Drizzle / Postgres)
 
-Better Auth manages its own tables (`user`, `session`, `account`, `verification`) — generate them via its CLI/adapter, don't hand-write them. The app owns the tables below.
+Neon Auth syncs authenticated (registered) users into your Neon database as a managed users table (confirm the exact schema/table name when you enable Neon Auth in the console — historically a `neon_auth` schema). Don't hand-write auth tables; reference the Neon Auth users table for the `user_id` foreign keys below. The app owns the tables below.
 
 ```
 poll
@@ -65,11 +66,16 @@ vote
 - When `allow_multiple` is true, uniqueness is `(poll_id, user_id, option_id)` / `(poll_id, voter_token, option_id)` so a voter can pick several options but not the same one twice.
 - `vote_count` on `poll_option` is the read path; it is updated transactionally with each insert/delete. Treat the `vote` rows as the source of truth and `vote_count` as a cache that can be recomputed.
 
-## 4. Auth flows (Better Auth)
+## 4. Auth flows (Neon Auth + our own anonymous token)
 
-- **Anonymous (default):** no login required to create or vote. On first interaction, mint a stable `voter_token` (and `creator_token`) — store in an httpOnly cookie. This token dedups votes and powers "my polls" before a user signs up.
-- **Email/password and Google:** standard Better Auth. On sign-up, **migrate** the anonymous identity: attach polls created with `creator_token` and votes cast with `voter_token` to the new `user_id`, so a user doesn't lose their work when they create an account.
+Two identity layers, intentionally separate:
+
+- **Anonymous (default, handled by us — not Neon Auth):** no login required to create or vote. On first interaction, mint a stable `voter_token` (and `creator_token`) and store it in an httpOnly cookie. This token dedups votes and powers "my polls" before a user signs up. Neon Auth is not involved here.
+- **Registered (Neon Auth):** email/password and Google, via Neon Auth's managed server (`createNeonAuth()` on the server, `createAuthClient()` on the client). The signed-in `user_id` comes from the Neon Auth users table synced into Postgres. Sessions are carried in a signed, httpOnly cookie.
+- **Anonymous → account migration:** when an anonymous user signs up via Neon Auth, attach polls created with their `creator_token` and votes cast with their `voter_token` to the new Neon Auth `user_id`, so they don't lose their work. This is our own logic, keyed on the cookie tokens — unaffected by which auth provider is used.
 - **Require name:** when a poll has `require_name = true`, an anonymous voter must supply `voter_name` before the vote is accepted.
+
+> Verify early (TASKS.md M2) that Neon Auth deploys on Cloudflare Workers via OpenNext. If it doesn't, swap to self-hosted Better Auth (same library, same data model — the anonymous layer above doesn't change at all).
 
 ## 5. API surface
 
@@ -81,7 +87,7 @@ Implement as server actions where it fits the App Router flow; expose route hand
 - `getResults(slug)` → `{ options: [{id, label, vote_count}], total }`. Cheap; used for live polling.
 - `listMyPolls()` → polls owned by the current `user_id` or `creator_token`.
 - `closePoll(id)`, `deletePoll(id)`, `updatePoll(id, patch)` → owner-only.
-- Auth routes handled by Better Auth.
+- Auth routes/handlers provided by Neon Auth (its Next.js SDK).
 
 **Rate limiting:** apply per-IP limits on `castVote` and `createPoll` (Cloudflare provides the IP). This plus the token dedup is the v1 anti-abuse story.
 
