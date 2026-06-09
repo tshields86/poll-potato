@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
-import { db, poll, pollOption } from "@/lib/db";
+import { getPoll } from "@/lib/polls-read";
 import { ShareUrl } from "@/components/poll/share-url";
+import { VoteView } from "@/components/poll/vote-view";
+import { ResultsView } from "@/components/poll/results-view";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +11,10 @@ type SearchParams = { "just-created"?: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const found = await db.query.poll.findFirst({ where: eq(poll.slug, slug) });
-  if (!found) return { title: "Poll not found · PollPotato" };
+  const poll = await getPoll(slug);
+  if (!poll) return { title: "Poll not found · PollPotato" };
   return {
-    title: `${found.question} · PollPotato`,
+    title: `${poll.question} · PollPotato`,
     description: "Cast your vote on PollPotato.",
   };
 }
@@ -27,20 +28,11 @@ export default async function PollPage({
 }) {
   const { slug } = await params;
   const { "just-created": justCreated } = await searchParams;
+  const poll = await getPoll(slug);
+  if (!poll) notFound();
 
-  const found = await db.query.poll.findFirst({
-    where: eq(poll.slug, slug),
-  });
-  if (!found) notFound();
-
-  const options = await db.query.pollOption.findMany({
-    where: eq(pollOption.pollId, found.id),
-    orderBy: (o, { asc }) => asc(o.position),
-  });
-
-  const closesIn = found.closesAt
-    ? formatDistanceToFuture(found.closesAt)
-    : null;
+  const showResults = poll.isClosed || (poll.hasVoted && !poll.resultsHidden);
+  const closesIn = poll.closesAt ? formatDistanceToFuture(poll.closesAt) : null;
 
   return (
     <section className="mx-auto max-w-xl px-[clamp(18px,5vw,56px)] py-10">
@@ -55,52 +47,24 @@ export default async function PollPage({
 
       <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-ink-soft">
         <span
-          className={`h-2 w-2 rounded-full ${found.status === "open" ? "bg-green-500" : "bg-ink-soft"}`}
+          className={`h-2 w-2 rounded-full ${
+            poll.isClosed ? "bg-ink-soft" : "bg-green-500"
+          }`}
         />
-        {found.status === "open"
-          ? closesIn
+        {poll.isClosed
+          ? "Closed · final results"
+          : closesIn
             ? `Open · closes ${closesIn}`
-            : "Open"
-          : "Closed"}
+            : "Open"}
       </div>
 
       <h1 className="font-display text-3xl font-extrabold tracking-tight">
-        {found.question}
+        {poll.question}
       </h1>
-      <p className="mt-2 text-sm text-ink-soft">
-        Voting lands in M4. Right now this is just the share-link preview.
-      </p>
 
-      <ul className="mt-6 space-y-3">
-        {options.map((o) => (
-          <li
-            key={o.id}
-            className="flex items-center justify-between rounded-[16px] border-2 border-line bg-surface px-4 py-3 text-base font-semibold"
-          >
-            <span>{o.label}</span>
-            <span aria-hidden className="h-[22px] w-[22px] rounded-full border-2 border-line" />
-          </li>
-        ))}
-      </ul>
-
-      <dl className="mt-8 grid grid-cols-2 gap-y-2 text-sm">
-        <dt className="text-ink-soft">Multiple answers</dt>
-        <dd className="text-right font-semibold">{found.allowMultiple ? "Yes" : "No"}</dd>
-        <dt className="text-ink-soft">Require name</dt>
-        <dd className="text-right font-semibold">{found.requireName ? "Yes" : "No"}</dd>
-        <dt className="text-ink-soft">Hide results until voted</dt>
-        <dd className="text-right font-semibold">{found.hideResults ? "Yes" : "No"}</dd>
-        <dt className="text-ink-soft">Auto-close</dt>
-        <dd className="text-right font-semibold">
-          {found.closesAt ? found.closesAt.toLocaleString() : "Off"}
-        </dd>
-      </dl>
-
-      {!justCreated && (
-        <div className="mt-8">
-          <ShareUrl slug={slug} />
-        </div>
-      )}
+      <div className="mt-6">
+        {showResults ? <ResultsView poll={poll} /> : <VoteView poll={poll} />}
+      </div>
     </section>
   );
 }
