@@ -8,6 +8,8 @@ export default defineConfig({
   dialect: "postgresql",
   casing: "snake_case",
   dbCredentials: { url: process.env.DATABASE_URL ?? "" },
+  // Don't manage Neon Auth's schema — Neon owns it.
+  schemaFilter: ["public"],
   strict: true,
   verbose: true,
 });
