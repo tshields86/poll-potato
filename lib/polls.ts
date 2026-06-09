@@ -5,6 +5,13 @@ import { db, poll, pollOption } from "./db";
 import { getIdentity } from "./identity";
 import { ensureAnonymousIdentity } from "./identity-actions";
 import { castVoteFor, type CastVoteCoreResult } from "./polls-cast";
+import {
+  closePollFor,
+  deletePollFor,
+  updatePollFor,
+  type OwnerResult,
+  type UpdatePollPatch,
+} from "./polls-edit";
 import { rateLimitByIp } from "./rate-limit";
 import { newSlug } from "./slug";
 
@@ -159,4 +166,27 @@ export async function castVote(input: CastVoteInput): Promise<CastVoteResult> {
     userId,
     voterToken,
   });
+}
+
+async function resolveOwnerIdentity() {
+  const identity = await getIdentity();
+  return {
+    userId: identity.kind === "user" ? identity.userId : null,
+    creatorToken: identity.creatorToken,
+  };
+}
+
+export async function closePoll(pollId: string): Promise<OwnerResult> {
+  return closePollFor(pollId, await resolveOwnerIdentity());
+}
+
+export async function deletePoll(pollId: string): Promise<OwnerResult> {
+  return deletePollFor(pollId, await resolveOwnerIdentity());
+}
+
+export async function updatePoll(
+  pollId: string,
+  patch: UpdatePollPatch,
+): Promise<OwnerResult> {
+  return updatePollFor(pollId, patch, await resolveOwnerIdentity());
 }
