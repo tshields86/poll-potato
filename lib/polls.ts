@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { db, poll, pollOption } from "./db";
 import { getIdentity } from "./identity";
 import { ensureAnonymousIdentity } from "./identity-actions";
+import { castVoteFor, type CastVoteCoreResult } from "./polls-cast";
+import { rateLimitByIp } from "./rate-limit";
 import { newSlug } from "./slug";
 
 const MAX_QUESTION = 200;
@@ -118,4 +120,43 @@ export async function createPoll(input: CreatePollInput): Promise<CreatePollResu
     }
   }
   return { error: "Couldn't generate a unique share link. Please try again." };
+}
+
+export type CastVoteInput = {
+  pollId: string;
+  optionIds: string[];
+  voterName?: string;
+};
+
+export type CastVoteResult =
+  | CastVoteCoreResult
+  | { error: string; field: "rate" };
+
+export async function castVote(input: CastVoteInput): Promise<CastVoteResult> {
+  const limit = await rateLimitByIp("castVote");
+  if (!limit.ok) {
+    return {
+      error: "You're voting too fast. Try again in a minute.",
+      field: "rate",
+    };
+  }
+
+  const identity = await getIdentity();
+  let userId: string | null = null;
+  let voterToken: string;
+  if (identity.kind === "user") {
+    userId = identity.userId;
+    voterToken =
+      identity.voterToken ?? (await ensureAnonymousIdentity()).voterToken;
+  } else {
+    voterToken = (await ensureAnonymousIdentity()).voterToken;
+  }
+
+  return castVoteFor({
+    pollId: input.pollId,
+    optionIds: input.optionIds,
+    voterName: input.voterName,
+    userId,
+    voterToken,
+  });
 }
