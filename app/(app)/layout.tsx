@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Wordmark } from "@/components/wordmark";
-import Link from "next/link";
+import { UserMenu } from "@/components/auth/user-menu";
 
 export default function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default function AppLayout({
         </span>
         <div className="flex-1" />
         <ThemeToggle />
+        <UserMenu />
       </header>
       <main className="flex-1">{children}</main>
     </div>
