@@ -102,3 +102,62 @@ export async function getPoll(slug: string): Promise<PollView | null> {
 
 // Re-export raw types for places that read poll without view normalization.
 export type { Poll, PollOption };
+
+export type ResultsSnapshot = {
+  slug: string;
+  status: "open" | "closed";
+  isClosed: boolean;
+  resultsHidden: boolean;
+  total: number | null;
+  options: { id: string; voteCount: number | null }[];
+};
+
+/**
+ * Cheap polling endpoint payload: just the counts + status. Honors
+ * hide_results based on the caller's identity (read from cookies/session).
+ */
+export async function getResults(slug: string): Promise<ResultsSnapshot | null> {
+  const p = await db.query.poll.findFirst({ where: eq(poll.slug, slug) });
+  if (!p) return null;
+
+  const identity = await getIdentity();
+  let hasVoted = false;
+  if (identity.kind === "user") {
+    const found = await db.query.vote.findFirst({
+      where: and(eq(vote.pollId, p.id), eq(vote.userId, identity.userId)),
+      columns: { id: true },
+    });
+    hasVoted = !!found;
+  } else if (identity.voterToken) {
+    const found = await db.query.vote.findFirst({
+      where: and(eq(vote.pollId, p.id), eq(vote.voterToken, identity.voterToken)),
+      columns: { id: true },
+    });
+    hasVoted = !!found;
+  }
+
+  const isClosed =
+    p.status === "closed" ||
+    (!!p.closesAt && p.closesAt.getTime() <= Date.now());
+  const resultsHidden = p.hideResults && !hasVoted && !isClosed;
+
+  const options = await db.query.pollOption.findMany({
+    where: eq(pollOption.pollId, p.id),
+    orderBy: (o) => asc(o.position),
+    columns: { id: true, voteCount: true },
+  });
+
+  return {
+    slug,
+    status: p.status as "open" | "closed",
+    isClosed,
+    resultsHidden,
+    total: resultsHidden
+      ? null
+      : options.reduce((a, o) => a + o.voteCount, 0),
+    options: options.map((o) => ({
+      id: o.id,
+      voteCount: resultsHidden ? null : o.voteCount,
+    })),
+  };
+}
