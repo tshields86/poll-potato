@@ -14,9 +14,14 @@ export default function AppLayout({
         <Link href="/app" aria-label="PollPotato app">
           <Wordmark />
         </Link>
-        <span className="rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-ink-soft">
-          app
-        </span>
+        <nav className="hidden items-center gap-1 sm:flex">
+          <Link
+            href="/app/my-polls"
+            className="rounded-full px-3 py-1.5 text-sm font-semibold text-ink-soft hover:text-ink"
+          >
+            My polls
+          </Link>
+        </nav>
         <div className="flex-1" />
         <ThemeToggle />
         <UserMenu />

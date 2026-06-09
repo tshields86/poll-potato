@@ -103,6 +103,75 @@ export async function getPoll(slug: string): Promise<PollView | null> {
 // Re-export raw types for places that read poll without view normalization.
 export type { Poll, PollOption };
 
+export type MyPollRow = {
+  id: string;
+  slug: string;
+  question: string;
+  status: "open" | "closed";
+  isClosed: boolean;
+  closesAt: Date | null;
+  createdAt: Date;
+  totalVotes: number;
+  optionCount: number;
+};
+
+/**
+ * Polls owned by the current viewer — by user_id when signed in, falling back
+ * to the anonymous creator_token cookie. Both are checked so users who created
+ * polls before signing up still see them.
+ */
+export async function listMyPolls(): Promise<MyPollRow[]> {
+  const identity = await getIdentity();
+  const userId = identity.kind === "user" ? identity.userId : null;
+  const creatorToken = identity.creatorToken;
+
+  if (!userId && !creatorToken) return [];
+
+  const owned = await db.query.poll.findMany({
+    where: (p, { eq, or }) => {
+      const clauses = [];
+      if (userId) clauses.push(eq(p.creatorUserId, userId));
+      if (creatorToken) clauses.push(eq(p.creatorToken, creatorToken));
+      return clauses.length === 1 ? clauses[0] : or(...clauses);
+    },
+    orderBy: (p, { desc }) => desc(p.createdAt),
+  });
+  if (owned.length === 0) return [];
+
+  const ids = owned.map((p) => p.id);
+  const allOptions = await db.query.pollOption.findMany({
+    where: (o, { inArray }) => inArray(o.pollId, ids),
+    columns: { pollId: true, voteCount: true },
+  });
+
+  const totals = new Map<string, { total: number; count: number }>();
+  for (const o of allOptions) {
+    const prev = totals.get(o.pollId) ?? { total: 0, count: 0 };
+    totals.set(o.pollId, {
+      total: prev.total + o.voteCount,
+      count: prev.count + 1,
+    });
+  }
+
+  const now = Date.now();
+  return owned.map((p) => {
+    const totalsRow = totals.get(p.id) ?? { total: 0, count: 0 };
+    return {
+      id: p.id,
+      slug: p.slug,
+      question: p.question,
+      status: p.status as "open" | "closed",
+      isClosed:
+        p.status === "closed" ||
+        (!!p.closesAt && p.closesAt.getTime() <= now),
+      closesAt: p.closesAt,
+      createdAt: p.createdAt,
+      totalVotes: totalsRow.total,
+      optionCount: totalsRow.count,
+    };
+  });
+}
+
 export type ResultsSnapshot = {
   slug: string;
   status: "open" | "closed";
