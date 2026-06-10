@@ -1,6 +1,14 @@
 /**
- * Minimal Workers config for the M2 smoke test. Real deployment config
- * (domains, secrets, observability) lands in M8.
+ * Production Workers config.
+ *
+ * Secrets (set via `wrangler secret put`, never checked in):
+ *   DATABASE_URL              — Neon Postgres HTTP URL
+ *   NEON_AUTH_BASE_URL        — Neon Auth instance URL
+ *   NEON_AUTH_COOKIE_SECRET   — 32+ char random string
+ *   GOOGLE_CLIENT_ID          — OAuth client id (configured in Neon Auth, not here, if managed there)
+ *   GOOGLE_CLIENT_SECRET      — OAuth client secret (ditto)
+ *
+ * Non-secret env (vars below) gets the production hostname overrides.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -11,5 +19,27 @@
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
-  }
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "PP_SITE_URL": "https://pollpotato.com",
+    "PP_APP_URL": "https://app.pollpotato.com",
+    "FEATURED_POLL_SLUG": "best-pizza-topping"
+  },
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "poll-potato-cache"
+    }
+  ]
+
+  // Once pollpotato.com is added as a Cloudflare zone, uncomment to bind
+  // custom domains directly to this Worker (replaces *.workers.dev URL).
+  //
+  // "routes": [
+  //   { "pattern": "pollpotato.com", "custom_domain": true },
+  //   { "pattern": "app.pollpotato.com", "custom_domain": true }
+  // ]
 }
