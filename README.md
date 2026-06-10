@@ -50,13 +50,3 @@ npm run dev                     # http://localhost:3344
 ## Deploy
 
 See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for the Cloudflare runbook — one-time setup (zone, R2 bucket, secrets, custom domains) and the CI pipeline. Pushes to `main` deploy automatically via GitHub Actions; manual deploys are `npm run cf:build && npx wrangler deploy`.
-
-## Docs
-
-| | |
-|---|---|
-| [`CLAUDE.md`](./CLAUDE.md) | Product principles, scope guardrails, design tokens, conventions. Read this first. |
-| [`TECHNICAL_SPEC.md`](./TECHNICAL_SPEC.md) | Architecture, data model, auth flows, API surface. |
-| [`TASKS.md`](./TASKS.md) | Build plan, milestone-by-milestone. |
-| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Cloudflare deploy runbook. |
-| `pollpotato-mock.html` | Approved visual reference — open it in a browser. |
