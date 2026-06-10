@@ -12,7 +12,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "poll-potato",
-  "main": ".open-next/worker.js",
+  // src/worker.ts wraps .open-next/worker.js with hostname canonicalization.
+  // The OpenNext build still produces .open-next/worker.js — our entry just
+  // imports it after running the redirect check.
+  "main": "src/worker.ts",
   "compatibility_date": "2025-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
