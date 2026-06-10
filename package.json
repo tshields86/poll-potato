@@ -11,6 +11,7 @@
     "db:migrate": "node --env-file=.env.local node_modules/drizzle-kit/bin.cjs migrate",
     "db:studio": "node --env-file=.env.local node_modules/drizzle-kit/bin.cjs studio",
     "db:seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
+    "db:seed-edge": "node --env-file=.env.local --import tsx scripts/seed-edge.ts",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview"
   },
