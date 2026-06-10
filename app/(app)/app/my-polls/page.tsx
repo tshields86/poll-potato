@@ -5,7 +5,7 @@ import { PollRow } from "@/components/dashboard/poll-row";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "My polls · PollPotato",
+  title: "My polls",
 };
 
 export default async function MyPollsPage() {

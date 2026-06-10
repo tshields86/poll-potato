@@ -1,7 +1,7 @@
 import { CreateForm } from "@/components/create/create-form";
 
 export const metadata = {
-  title: "New poll · PollPotato",
+  title: "New poll",
 };
 
 export default function CreatePollPage() {

@@ -17,18 +17,21 @@ export async function generateMetadata({
   const { slug } = await params;
   const poll = await getPoll(slug);
   if (!poll) {
-    return { title: "Poll not found · PollPotato", robots: { index: false } };
+    return { title: "Poll not found", robots: { index: false } };
   }
-  const title = `${poll.question} · PollPotato`;
+  // `title` gets the root template applied ("%s · PollPotato"), so use the
+  // bare question here. OG/Twitter titles are not templated and need the
+  // brand suffix added explicitly.
+  const socialTitle = `${poll.question} · PollPotato`;
   const description = poll.isClosed
     ? "See how the group voted."
     : "Cast your vote — share the link, settle it fast.";
   const url = `/p/${slug}`;
   return {
-    title,
+    title: poll.question,
     description,
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       url,
       siteName: "PollPotato",
@@ -36,7 +39,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: socialTitle,
       description,
     },
     alternates: { canonical: url },

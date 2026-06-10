@@ -7,7 +7,7 @@ import { SignUpForm } from "@/components/auth/sign-up-form";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Create your account · PollPotato",
+  title: "Create your account",
 };
 
 export default async function SignUpPage() {

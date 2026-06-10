@@ -7,7 +7,7 @@ import { SignInForm } from "@/components/auth/sign-in-form";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Sign in · PollPotato",
+  title: "Sign in",
 };
 
 export default async function SignInPage() {
