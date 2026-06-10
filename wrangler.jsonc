@@ -1,14 +1,13 @@
 /**
- * Production Workers config.
+ * Cloudflare Workers config for PollPotato.
  *
  * Secrets (set via `wrangler secret put`, never checked in):
  *   DATABASE_URL              — Neon Postgres HTTP URL
  *   NEON_AUTH_BASE_URL        — Neon Auth instance URL
  *   NEON_AUTH_COOKIE_SECRET   — 32+ char random string
- *   GOOGLE_CLIENT_ID          — OAuth client id (configured in Neon Auth, not here, if managed there)
- *   GOOGLE_CLIENT_SECRET      — OAuth client secret (ditto)
  *
- * Non-secret env (vars below) gets the production hostname overrides.
+ * Google OAuth is configured in the Neon Auth console (client id/secret
+ * live there, not as Worker secrets).
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -34,17 +33,8 @@
       "bucket_name": "poll-potato-cache"
     }
   ],
-
-  // Keep the *.workers.dev URL active while we test. Custom domains are
-  // configured below but commented out until pollpotato.com is added as a
-  // Cloudflare zone (DNS swap pending).
-  "workers_dev": true
-
-  // Once pollpotato.com is added as a Cloudflare zone, set `workers_dev`
-  // to false (or remove it) and uncomment the routes:
-  //
-  // "routes": [
-  //   { "pattern": "pollpotato.com", "custom_domain": true },
-  //   { "pattern": "app.pollpotato.com", "custom_domain": true }
-  // ]
+  "routes": [
+    { "pattern": "pollpotato.com", "custom_domain": true },
+    { "pattern": "app.pollpotato.com", "custom_domain": true }
+  ]
 }
