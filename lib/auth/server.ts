@@ -14,5 +14,11 @@ if (!cookieSecret || cookieSecret.length < 32) {
 
 export const auth = createNeonAuth({
   baseUrl,
-  cookies: { secret: cookieSecret },
+  cookies: {
+    secret: cookieSecret,
+    // Share the session cookie across pollpotato.com and app.pollpotato.com.
+    // Without this, signing up on the marketing host leaves the user
+    // "signed out" on the app subdomain (where every actual flow lives).
+    domain: process.env.NODE_ENV === "production" ? ".pollpotato.com" : undefined,
+  },
 });

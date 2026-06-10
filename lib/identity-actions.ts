@@ -25,6 +25,10 @@ export async function ensureAnonymousIdentity(): Promise<{
     sameSite: "lax" as const,
     path: "/",
     maxAge: ONE_YEAR_SECONDS,
+    // Share across pollpotato.com and app.pollpotato.com so a visitor's
+    // anonymous tokens carry between the marketing landing and the app
+    // subdomain (and stay attached to the user post sign-in).
+    domain: process.env.NODE_ENV === "production" ? ".pollpotato.com" : undefined,
   };
 
   if (!voterToken) {
