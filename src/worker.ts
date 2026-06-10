@@ -36,6 +36,14 @@ function canonicalRedirect(request: Request): Response | null {
   // always attaches cf-ray, so its presence is a reliable production signal.
   if (!request.headers.get("cf-ray")) return null;
 
+  // Only canonicalize top-level GET navigations. POST/PUT/PATCH/DELETE are
+  // either server actions (Next.js posts to the current page URL), API
+  // calls, or sign-in form submissions — they aren't user-visible URL
+  // changes, so redirecting them would just break the CORS preflight and
+  // kill the request. Both hosts run the same Worker, so the handler
+  // executes correctly wherever it lands.
+  if (request.method !== "GET" && request.method !== "HEAD") return null;
+
   // Don't 308 Next.js RSC prefetch fetches across hostnames — the browser
   // would block them via CORS because the requesting origin (pollpotato.com)
   // differs from the redirect target (app.pollpotato.com). Both hosts run
