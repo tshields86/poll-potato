@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Wordmark } from "@/components/wordmark";
 import { UserMenu } from "@/components/auth/user-menu";
 import { auth } from "@/lib/auth/server";
+
+// The whole app surface (app.pollpotato.com) is noindex — marketing/SEO lives
+// on the bare-domain (marketing) group. robots.txt disallows these paths too;
+// this is belt-and-suspenders for backlinks that might surface a URL anyway.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AppLayout({
   children,
