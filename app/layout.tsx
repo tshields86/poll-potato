@@ -68,6 +68,18 @@ export default function RootLayout({
       className={`${bricolage.variable} ${hanken.variable} ${spaceMono.variable}`}
     >
       <body className="min-h-dvh font-sans">
+        {/*
+          esbuild emits `__name(fn, "fn")` wrappers around the IIFE that
+          next-themes ships as its inline FOUC-prevention script. The
+          helper isn't bundled with the inline string, so without this
+          shim the script throws on first paint and the .dark class
+          never gets applied on subsequent navigations.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "self.__name=self.__name||function(t){return t}",
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
