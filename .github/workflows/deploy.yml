@@ -9,6 +9,11 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
+# Opt into Node 24 for the bundled JavaScript actions ahead of GitHub's
+# 2026-06-16 cutoff. Quiets the deprecation warning and is forward-compatible.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
