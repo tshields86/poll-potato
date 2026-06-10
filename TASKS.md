@@ -76,6 +76,7 @@ Work top to bottom. Each milestone has an acceptance check — don't move on unt
 - [ ] Real empty and error states in the interface's voice (no votes yet, poll not found, poll closed, poll expired).
 - [ ] Mobile QA from 360px up; desktop layouts.
 - [ ] Edge cases: very long questions/options, many options, simultaneous votes, cold-start latency from Neon.
+- [ ] Hostname canonicalization: `/app/*`, `/p/*`, `/auth/*` on `pollpotato.com` should 308 to `app.pollpotato.com`, and `app.pollpotato.com/` should 308 to `pollpotato.com/`. Initial attempt via `next.config.ts` `redirects()` with `has: { type: "host" }` looped because the matcher treats `value` as an unanchored regex (literal `pollpotato.com` also matches `app.pollpotato.com`). Do it as a small Worker-level rewrite (custom entry that wraps OpenNext's `worker.js`) — checking `request.headers.get("host")` directly is unambiguous.
 - **Acceptance:** the quality floor in CLAUDE.md is met across light and dark, mobile and desktop.
 
 ---
