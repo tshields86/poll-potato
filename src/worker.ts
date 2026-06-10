@@ -36,7 +36,19 @@ function canonicalRedirect(request: Request): Response | null {
   // always attaches cf-ray, so its presence is a reliable production signal.
   if (!request.headers.get("cf-ray")) return null;
 
+  // Don't 308 Next.js RSC prefetch fetches across hostnames — the browser
+  // would block them via CORS because the requesting origin (pollpotato.com)
+  // differs from the redirect target (app.pollpotato.com). Both hosts run
+  // the same Worker so the payload is identical either way. The user's
+  // eventual click is a top-level navigation and DOES get canonicalized.
   const url = new URL(request.url);
+  if (
+    request.headers.get("RSC") === "1" ||
+    request.headers.get("Next-Router-Prefetch") === "1" ||
+    url.searchParams.has("_rsc")
+  ) {
+    return null;
+  }
   const host = url.host.toLowerCase();
   const path = url.pathname;
 
