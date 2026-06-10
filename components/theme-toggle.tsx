@@ -24,7 +24,7 @@ export function ThemeToggle() {
       type="button"
       aria-label={`Switch to ${label.toLowerCase()} mode`}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary"
+      className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary sm:px-4"
       suppressHydrationWarning
     >
       {mounted ? (
@@ -36,7 +36,7 @@ export function ThemeToggle() {
       ) : (
         <span className="h-4 w-4" aria-hidden />
       )}
-      <span suppressHydrationWarning>{label}</span>
+      <span className="hidden sm:inline" suppressHydrationWarning>{label}</span>
     </button>
   );
 }
