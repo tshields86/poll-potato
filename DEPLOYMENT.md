@@ -91,8 +91,15 @@ If anything fails: `npx wrangler tail` streams live logs from the Worker.
 
 ## 4. Wire the custom domains
 
-Once the zone is active in Cloudflare, edit `wrangler.jsonc` and uncomment the
-`routes` block at the bottom:
+**Wait until pollpotato.com is an active Cloudflare zone** (DNS propagated,
+not just "Add a site" submitted). If you wire `routes` against a hostname
+Cloudflare doesn't yet manage, the trigger-register API call fails with
+`workers/scripts/poll-potato/domains/records` 4xx.
+
+Once the zone is active, edit `wrangler.jsonc`:
+
+1. Remove `"workers_dev": true` (or set it to `false`)
+2. Uncomment the `routes` block at the bottom
 
 ```jsonc
 "routes": [

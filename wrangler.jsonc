@@ -33,10 +33,15 @@
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
       "bucket_name": "poll-potato-cache"
     }
-  ]
+  ],
 
-  // Once pollpotato.com is added as a Cloudflare zone, uncomment to bind
-  // custom domains directly to this Worker (replaces *.workers.dev URL).
+  // Keep the *.workers.dev URL active while we test. Custom domains are
+  // configured below but commented out until pollpotato.com is added as a
+  // Cloudflare zone (DNS swap pending).
+  "workers_dev": true
+
+  // Once pollpotato.com is added as a Cloudflare zone, set `workers_dev`
+  // to false (or remove it) and uncomment the routes:
   //
   // "routes": [
   //   { "pattern": "pollpotato.com", "custom_domain": true },
