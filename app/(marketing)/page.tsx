@@ -6,7 +6,41 @@ import { Mascot } from "@/components/mascot";
 export const revalidate = 60;
 
 const FEATURED_SLUG = process.env.FEATURED_POLL_SLUG ?? "best-pizza-topping";
+const SITE_URL = process.env.PP_SITE_URL ?? "https://pollpotato.com";
 const APP_URL = process.env.PP_APP_URL ?? "https://app.pollpotato.com";
+
+// JSON-LD: lets Google associate the wordmark/icon with the domain and
+// surface PollPotato as a brand. WebApplication signals this is an
+// interactive tool (search results pick that up vs treating it as a blog).
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#org`,
+      name: "PollPotato",
+      url: SITE_URL,
+      logo: `${SITE_URL}/icon.svg`,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#site`,
+      url: SITE_URL,
+      name: "PollPotato",
+      publisher: { "@id": `${SITE_URL}/#org` },
+    },
+    {
+      "@type": "WebApplication",
+      name: "PollPotato",
+      url: `${APP_URL}/app/create`,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "Create a poll in ten seconds, share one link, and watch live results roll in.",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+  ],
+};
 
 type FeaturedResult = {
   question: string;
@@ -49,6 +83,10 @@ export default async function MarketingHome() {
 
   return (
     <section className="mx-auto max-w-6xl px-[clamp(18px,5vw,56px)] py-12 lg:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      />
       <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <Mascot mood="happy" animation="bob" className="mb-6" />
