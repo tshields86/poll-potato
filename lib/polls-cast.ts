@@ -78,20 +78,22 @@ export async function castVoteFor(
     voterName = input.voterName.trim().slice(0, MAX_VOTER_NAME) || null;
   }
 
-  if (!target.allowMultiple) {
-    const priorWhere = input.userId
-      ? and(eq(vote.pollId, target.id), eq(vote.userId, input.userId))
-      : and(eq(vote.pollId, target.id), eq(vote.voterToken, input.voterToken));
-    const removed = await db
-      .delete(vote)
-      .where(priorWhere)
-      .returning({ optionId: vote.optionId });
-    for (const r of removed) {
-      await db
-        .update(pollOption)
-        .set({ voteCount: sql`${pollOption.voteCount} - 1` })
-        .where(eq(pollOption.id, r.optionId));
-    }
+  // The voter's current selection for this poll should be exactly `optionIds`
+  // — delete-then-insert applies for both single-choice and multi-choice. The
+  // earlier implementation only deleted prior votes when allowMultiple was
+  // false, so changing a multi-select from {A,B} to {A,C} left B behind.
+  const priorWhere = input.userId
+    ? and(eq(vote.pollId, target.id), eq(vote.userId, input.userId))
+    : and(eq(vote.pollId, target.id), eq(vote.voterToken, input.voterToken));
+  const removed = await db
+    .delete(vote)
+    .where(priorWhere)
+    .returning({ optionId: vote.optionId });
+  for (const r of removed) {
+    await db
+      .update(pollOption)
+      .set({ voteCount: sql`${pollOption.voteCount} - 1` })
+      .where(eq(pollOption.id, r.optionId));
   }
 
   const inserted = await db

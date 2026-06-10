@@ -6,6 +6,7 @@ import { Mascot } from "@/components/mascot";
 export const revalidate = 60;
 
 const FEATURED_SLUG = process.env.FEATURED_POLL_SLUG ?? "best-pizza-topping";
+const APP_URL = process.env.PP_APP_URL ?? "https://app.pollpotato.com";
 
 type FeaturedResult = {
   question: string;
@@ -64,13 +65,13 @@ export default async function MarketingHome() {
 
           <div className="mt-7 flex flex-wrap items-center gap-5">
             <Link
-              href="/app/create"
+              href={`${APP_URL}/app/create`}
               className="inline-flex items-center rounded-[14px] bg-primary px-7 py-4 font-display text-base font-bold text-primary-foreground transition-[filter,transform] hover:-translate-y-px hover:brightness-110"
             >
               Start a poll
             </Link>
             <Link
-              href={`/p/${FEATURED_SLUG}`}
+              href={`${APP_URL}/p/${FEATURED_SLUG}`}
               className="font-display text-[15px] font-bold text-ink-soft hover:text-ink"
             >
               or see an example →

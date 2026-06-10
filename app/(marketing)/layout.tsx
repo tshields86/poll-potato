@@ -20,7 +20,7 @@ export default function MarketingLayout({
         </Link>
         <div className="flex-1" />
         <ThemeToggle />
-        <UserMenu user={null} />
+        <UserMenu user={null} crossHost />
       </header>
       <main className="flex-1">{children}</main>
     </div>

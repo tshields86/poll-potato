@@ -66,16 +66,33 @@ function canonicalRedirect(request: Request): Response | null {
     );
     if (isAppPath) {
       url.host = APP_HOST;
-      return Response.redirect(url.toString(), 308);
+      return redirect308(url.toString());
     }
   }
 
   if (host === APP_HOST && path === "/") {
     url.host = MARKETING_HOST;
-    return Response.redirect(url.toString(), 308);
+    return redirect308(url.toString());
   }
 
   return null;
+}
+
+/**
+ * 308 with `Cache-Control: no-store` so browsers don't aggressively cache
+ * the redirect. Without this, a redirect emitted while our route rules
+ * were less-than-perfect (early M9-G iterations) could stick in users'
+ * caches for days even after we deployed the fix, because 308 is
+ * "permanent" and Chromium treats it accordingly.
+ */
+function redirect308(location: string): Response {
+  return new Response(null, {
+    status: 308,
+    headers: {
+      Location: location,
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
 const handler = {
