@@ -24,10 +24,17 @@ export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "../.open-ne
 
 const MARKETING_HOST = "pollpotato.com";
 const APP_HOST = "app.pollpotato.com";
+const WWW_HOST = "www.pollpotato.com";
 
 // Paths that only make sense on the app subdomain. `/api/*` deliberately
 // stays available on both hosts so SEO crawlers and embeds aren't blocked.
 const APP_ONLY_PREFIXES = ["/app", "/p", "/auth"];
+
+function isAppOnlyPath(path: string): boolean {
+  return APP_ONLY_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(prefix + "/"),
+  );
+}
 
 function canonicalRedirect(request: Request): Response | null {
   // Skip canonicalization on local dev (wrangler/workerd synthesizes the
@@ -60,11 +67,15 @@ function canonicalRedirect(request: Request): Response | null {
   const host = url.host.toLowerCase();
   const path = url.pathname;
 
+  // www.pollpotato.com is not a canonical host. Route straight to the right
+  // bare-domain host based on path so the user only sees one 308, not two.
+  if (host === WWW_HOST) {
+    url.host = isAppOnlyPath(path) ? APP_HOST : MARKETING_HOST;
+    return redirect308(url.toString());
+  }
+
   if (host === MARKETING_HOST) {
-    const isAppPath = APP_ONLY_PREFIXES.some(
-      (prefix) => path === prefix || path.startsWith(prefix + "/"),
-    );
-    if (isAppPath) {
+    if (isAppOnlyPath(path)) {
       url.host = APP_HOST;
       return redirect308(url.toString());
     }

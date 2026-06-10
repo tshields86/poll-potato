@@ -38,6 +38,7 @@
   ],
   "routes": [
     { "pattern": "pollpotato.com", "custom_domain": true },
-    { "pattern": "app.pollpotato.com", "custom_domain": true }
+    { "pattern": "app.pollpotato.com", "custom_domain": true },
+    { "pattern": "www.pollpotato.com/*", "zone_name": "pollpotato.com" }
   ]
 }
