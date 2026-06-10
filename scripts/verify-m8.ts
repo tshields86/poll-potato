@@ -7,6 +7,8 @@
  * PP_BASE_URL at that URL — the hostname-redirect assertions will be skipped
  * automatically because they only fire on the production hostnames.
  */
+export {};
+
 const baseUrl = (process.env.PP_BASE_URL ?? "http://localhost:3344").replace(/\/$/, "");
 const SITE_URL = process.env.PP_SITE_URL ?? "https://pollpotato.com";
 const APP_URL = process.env.PP_APP_URL ?? "https://app.pollpotato.com";

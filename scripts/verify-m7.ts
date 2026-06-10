@@ -1,3 +1,5 @@
+export {};
+
 const baseUrl = process.env.PP_BASE_URL ?? "http://localhost:3344";
 
 function assert(cond: unknown, label: string) {
