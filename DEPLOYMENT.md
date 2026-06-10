@@ -136,13 +136,69 @@ canonical host, walks the app subdomain, and confirms the hostname redirects
 fire correctly. (Sign-in-gated flows are not exercised here — verify those
 manually after the first deploy.)
 
-## 6. CI (deferred)
+## 6. CI deploy via GitHub Actions
 
-Per the M8 plan we ship the first deploy manually. Once that is stable, add
-`.github/workflows/deploy.yml` that runs `npm run cf:build` and
-`wrangler deploy` on pushes to `main`. The workflow needs a
-`CLOUDFLARE_API_TOKEN` repo secret (create it in the Cloudflare dashboard with
-the `Workers Scripts:Edit` template, scoped to the `poll-potato` Worker).
+`.github/workflows/deploy.yml` runs on every push to `main` (and via the
+**Run workflow** button under the Actions tab). It builds with OpenNext and
+deploys via `cloudflare/wrangler-action@v3`.
+
+### a. Cloudflare API token
+
+dash.cloudflare.com → top-right account icon → **My Profile → API Tokens**
+→ **Create Token** → **Edit Cloudflare Workers** template.
+
+- Permissions are pre-filled by the template (Workers Scripts, Workers Routes,
+  Account Settings, User Details, etc.).
+- **Account Resources:** restrict to your account.
+- **Zone Resources:** include `pollpotato.com`.
+- TTL: leave open-ended, or set an expiry if you're rotating.
+
+Copy the token immediately — Cloudflare shows it once.
+
+### b. Cloudflare account id
+
+dash.cloudflare.com → any **Workers & Pages** page → right sidebar shows
+**Account ID**. Copy it.
+
+### c. GitHub repo secrets
+
+In your repo: **Settings → Secrets and variables → Actions → New repository
+secret**. Add five secrets total:
+
+| Name | Value |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | from step (a) |
+| `CLOUDFLARE_ACCOUNT_ID` | from step (b) |
+| `DATABASE_URL` | same Neon HTTP URL you set with `wrangler secret put` |
+| `NEON_AUTH_BASE_URL` | same Neon Auth instance URL |
+| `NEON_AUTH_COOKIE_SECRET` | same 32+ char string |
+
+The three runtime secrets are mirrored into GitHub because `next build`
+validates them at module-load time (our `lib/db/index.ts` and
+`lib/auth/server.ts` throw if they're missing or malformed). The Worker
+itself still reads its **own** secrets at runtime, not these — these only
+satisfy the build.
+
+### d. First CI run
+
+Push a commit to `main`. **Actions** tab → `deploy` workflow → tail the run.
+On success the new Worker version is live within ~2 min of the push.
+
+If the build step fails because one of the three runtime secrets is
+missing/wrong in GitHub, the error in the Actions log will be the same
+"Invalid URL string" / module-load throw you'd see locally — fix the GitHub
+secret value and re-run.
+
+### Rotating secrets
+
+When you change a runtime secret value, update it in **both** places:
+
+```bash
+echo "<new value>" | npx wrangler secret put DATABASE_URL    # Worker runtime
+```
+
+…and in **GitHub → Settings → Secrets → Actions** so the next CI build
+doesn't fail. Otherwise the two will drift.
 
 ## Troubleshooting
 
