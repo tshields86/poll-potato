@@ -26,10 +26,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
-      - run: npm ci
+      # Use `npm install` rather than `npm ci` because `package-lock.json`
+      # is regenerated on macOS, where the wasm-fallback optional peer deps
+      # (@emnapi/*) resolve to different versions than they do on Linux.
+      # `npm ci` would reject the lockfile drift; `npm install` reconciles
+      # it for this run without committing changes back.
+      - run: npm install --no-audit --no-fund
 
       - run: npm run cf:build
         env:
