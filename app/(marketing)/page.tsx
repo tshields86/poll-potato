@@ -122,7 +122,7 @@ function FeaturedDemo({
           );
         })}
       </ol>
-      <p className="mt-4 flex items-center gap-1.5 font-mono text-xs font-bold text-green-600">
+      <p className="mt-4 flex items-center gap-1.5 font-mono text-xs font-bold text-green-700 dark:text-green-400">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_0_3px_rgb(34_197_94_/_0.16)]" />
         updating live · {total.toLocaleString()} votes
       </p>
