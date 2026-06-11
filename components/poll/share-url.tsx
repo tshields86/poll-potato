@@ -30,7 +30,7 @@ export function ShareUrl({ slug, className }: { slug: string; className?: string
         <input
           readOnly
           value={url}
-          className="flex-1 bg-transparent px-3 font-mono text-sm text-ink outline-none"
+          className="min-w-0 flex-1 bg-transparent px-3 font-mono text-sm text-ink outline-none"
           onClick={(e) => e.currentTarget.select()}
           aria-label="Share link"
         />
