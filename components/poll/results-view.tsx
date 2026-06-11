@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PollView } from "@/lib/polls-read";
@@ -13,6 +13,15 @@ import { VoteView } from "@/components/poll/vote-view";
 
 export function ResultsView({ poll }: { poll: PollView }) {
   const [editing, setEditing] = useState(false);
+  // Optimistic vote shown after the user updates from edit mode — router.refresh()
+  // hasn't necessarily propagated by the time they bounce back to results, and
+  // poll.viewerVote would otherwise still show the prior selection. Cleared when
+  // the refreshed poll prop arrives.
+  const [optimisticVote, setOptimisticVote] = useState<string[] | null>(null);
+  useEffect(() => {
+    setOptimisticVote(null);
+  }, [poll]);
+  const viewerVote = optimisticVote ?? poll.viewerVote;
 
   const initialSnapshot: ResultsSnapshot = useMemo(
     () => ({
@@ -39,7 +48,13 @@ export function ResultsView({ poll }: { poll: PollView }) {
         <Button variant="ghost" type="button" onClick={() => setEditing(false)}>
           ← Back to results
         </Button>
-        <VoteView poll={poll} />
+        <VoteView
+          poll={poll}
+          onSuccess={(newVote) => {
+            setOptimisticVote(newVote);
+            setEditing(false);
+          }}
+        />
       </div>
     );
   }
@@ -48,7 +63,7 @@ export function ResultsView({ poll }: { poll: PollView }) {
   const counts = new Map(live.options.map((o) => [o.id, o.voteCount ?? 0]));
   const max = Math.max(0, ...Array.from(counts.values()));
   const votedLabels = poll.options
-    .filter((o) => poll.viewerVote.includes(o.id))
+    .filter((o) => viewerVote.includes(o.id))
     .map((o) => o.label);
 
   return (

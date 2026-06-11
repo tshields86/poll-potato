@@ -11,9 +11,11 @@ import type { PollView } from "@/lib/polls-read";
 export function VoteView({
   poll,
   initialName = "",
+  onSuccess,
 }: {
   poll: PollView;
   initialName?: string;
+  onSuccess?: (viewerVote: string[]) => void;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>(poll.viewerVote);
@@ -54,6 +56,7 @@ export function VoteView({
         return;
       }
       router.refresh();
+      onSuccess?.(result.viewerVote);
     });
   }
 
