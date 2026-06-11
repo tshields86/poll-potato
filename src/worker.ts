@@ -106,6 +106,36 @@ function redirect308(location: string): Response {
   });
 }
 
+// Host-specific robots.txt for the app subdomain. Next's robots.ts is
+// host-agnostic and serves the same body on both hosts, so without this
+// override app.pollpotato.com/robots.txt advertises `Allow: /` — exactly
+// the opposite of what we want for the non-canonical host. Intercept here
+// instead of plumbing host-awareness into the Next route.
+const APP_ROBOTS_BODY = "User-agent: *\nDisallow: /\n";
+
+function appHostRobots(request: Request): Response | null {
+  const url = new URL(request.url);
+  if (url.host.toLowerCase() !== APP_HOST) return null;
+  if (url.pathname !== "/robots.txt") return null;
+  return new Response(APP_ROBOTS_BODY, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+// Stamp every app-subdomain response with X-Robots-Tag: noindex so a backlink
+// to e.g. app.pollpotato.com/p/<slug> can never produce an index entry, even
+// if robots.txt is ignored. Marketing/SEO lives exclusively on the bare host.
+function withAppHostNoIndex(host: string, response: Response): Response {
+  if (host !== APP_HOST) return response;
+  const headers = new Headers(response.headers);
+  headers.set("X-Robots-Tag", "noindex, nofollow");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 const handler = {
   async fetch(
     request: Request,
@@ -114,7 +144,13 @@ const handler = {
   ): Promise<Response> {
     const redirect = canonicalRedirect(request);
     if (redirect) return redirect;
-    return openNextWorker.fetch(request, env, ctx);
+
+    const robots = appHostRobots(request);
+    if (robots) return robots;
+
+    const host = new URL(request.url).host.toLowerCase();
+    const response = await openNextWorker.fetch(request, env, ctx);
+    return withAppHostNoIndex(host, response);
   },
 };
 
