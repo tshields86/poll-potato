@@ -71,7 +71,6 @@ export function CreateForm() {
         return;
       }
       router.push(`/p/${result.slug}?just-created=1`);
-      router.refresh();
     });
   }
 
