@@ -79,8 +79,11 @@ export function EditPollForm({ poll }: { poll: EditablePoll }) {
         setError(result.error);
         return;
       }
+      // No router.refresh() after push — the poll page is force-dynamic and
+      // re-fetches fresh data on navigation. Calling refresh() here keeps the
+      // transition pending and hangs the "Saving…" spinner (see the create
+      // form's history for the same fix).
       router.push(`/p/${poll.slug}`);
-      router.refresh();
     });
   }
 
