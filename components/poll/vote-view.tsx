@@ -44,6 +44,11 @@ export function VoteView({
       setErrorField("optionIds");
       return;
     }
+    if (poll.requireName && !voterName.trim()) {
+      setError("Add your name to vote.");
+      setErrorField("voterName");
+      return;
+    }
     startTransition(async () => {
       const result = await castVote({
         pollId: poll.id,

@@ -11,7 +11,13 @@ import { Button } from "@/components/ui/button";
 import { ShareUrl } from "@/components/poll/share-url";
 import { VoteView } from "@/components/poll/vote-view";
 
-export function ResultsView({ poll }: { poll: PollView }) {
+export function ResultsView({
+  poll,
+  viewerName = "",
+}: {
+  poll: PollView;
+  viewerName?: string;
+}) {
   const [editing, setEditing] = useState(false);
   // Optimistic vote shown after the user updates from edit mode — router.refresh()
   // hasn't necessarily propagated by the time they bounce back to results, and
@@ -54,6 +60,7 @@ export function ResultsView({ poll }: { poll: PollView }) {
         </Button>
         <VoteView
           poll={poll}
+          initialName={viewerName}
           onSuccess={(newVote) => {
             setOptimisticVote(newVote);
             setEditing(false);

@@ -62,7 +62,11 @@ export async function castVoteFor(
   }
 
   let voterName: string | null = null;
-  if (target.requireName && !input.userId) {
+  // require_name applies to everyone, signed-in included. Signed-in voters get
+  // their account name prefilled client-side, so this normally passes without
+  // friction — but a blank submission is still rejected rather than silently
+  // stored as null (which would surface as "Anonymous" when show_voters is on).
+  if (target.requireName) {
     const name = (input.voterName ?? "").trim();
     if (!name) {
       return { error: "This poll requires a name.", field: "voterName" };

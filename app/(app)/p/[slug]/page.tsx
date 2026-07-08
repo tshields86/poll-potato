@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPoll } from "@/lib/polls-read";
+import { auth } from "@/lib/auth/server";
 import { ShareUrl } from "@/components/poll/share-url";
 import { VoteView } from "@/components/poll/vote-view";
 import { ResultsView } from "@/components/poll/results-view";
@@ -59,6 +60,11 @@ export default async function PollPage({
   const poll = await getPoll(slug);
   if (!poll) notFound();
 
+  // Prefill the name field for signed-in voters so "require a name" polls don't
+  // make them retype what their account already knows.
+  const { data: session } = await auth.getSession();
+  const viewerName = session?.user?.name ?? "";
+
   const showResults = poll.isClosed || (poll.hasVoted && !poll.resultsHidden);
   const closesIn = poll.closesAt ? formatDistanceToFuture(poll.closesAt) : null;
 
@@ -91,7 +97,11 @@ export default async function PollPage({
       </h1>
 
       <div className="mt-6">
-        {showResults ? <ResultsView poll={poll} /> : <VoteView poll={poll} />}
+        {showResults ? (
+          <ResultsView poll={poll} viewerName={viewerName} />
+        ) : (
+          <VoteView poll={poll} initialName={viewerName} />
+        )}
       </div>
 
       {poll.isOwner && (
