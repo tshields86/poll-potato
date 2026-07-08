@@ -81,6 +81,18 @@ Work top to bottom. Each milestone has an acceptance check — don't move on unt
 
 ---
 
+## M10 — Poll editing + show who voted (post-v1)
+- [x] Owner-controls bar on the poll page (edit / close / delete), shown only to the creator.
+- [x] Owner-only edit screen at `/p/[slug]/edit`, prefilled; options lock once voting has started.
+- [x] Edit button on the "my polls" dashboard rows.
+- [x] `show_voters` column + migration (`0002_add_show_voters.sql`).
+- [x] Reads (`getPoll` / `getResults`) return voter names grouped by option, marking the viewer's own vote; gated by `hide_results`.
+- [x] "Show who voted" toggle on create + edit; auto-locks "require a name" on; can't be enabled after the first vote (client + server); vote screen shows a name disclosure.
+- [x] Results roster: voter-name chips under each bar, own chip highlighted, long lists collapse behind `+N more`.
+- **Acceptance:** verified end-to-end with Playwright — create with show-voters, vote with a name, roster + overflow render, edit persists, options/show-voters lock after votes, close works.
+
+---
+
 ## Backlog — do NOT build in v1 (needs an explicit decision)
 - [ ] True realtime results via Cloudflare Durable Objects (WebSocket/SSE).
 - [ ] "Let voters add their own option."

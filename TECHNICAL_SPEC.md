@@ -37,6 +37,7 @@ poll
   allow_multiple    boolean not null default false
   require_name      boolean not null default false
   hide_results      boolean not null default false  -- hide results until the viewer has voted
+  show_voters       boolean not null default false  -- surface each voter's name by their answer; forces require_name
   status            text not null default 'open'    -- 'open' | 'closed'
   closes_at         timestamptz null               -- auto-close time, null = no auto-close
   created_at        timestamptz not null default now()
@@ -84,6 +85,7 @@ Two identity layers, intentionally separate:
 - **Registered (Neon Auth):** email/password and Google, via Neon Auth's managed server (`createNeonAuth()` on the server, `createAuthClient()` on the client). The signed-in `user_id` comes from the Neon Auth users table synced into Postgres. Sessions are carried in a signed, httpOnly cookie.
 - **Anonymous → account migration:** when an anonymous user signs up via Neon Auth, attach polls created with their `creator_token` and votes cast with their `voter_token` to the new Neon Auth `user_id`, so they don't lose their work. This is our own logic, keyed on the cookie tokens — unaffected by which auth provider is used.
 - **Require name:** when a poll has `require_name = true`, an anonymous voter must supply `voter_name` before the vote is accepted.
+- **Show who voted:** when `show_voters = true`, results list each voter's name grouped under the option they chose. It forces `require_name` on (a roster of "Anonymous" is useless), and it can only be turned **on at creation** — enabling it after any vote exists is rejected, so nobody's name is revealed under an expectation they didn't agree to. Turning it off later (less exposure) is allowed.
 
 > Verify early (TASKS.md M2) that Neon Auth deploys on Cloudflare Workers via OpenNext. If it doesn't, swap to self-hosted Better Auth (same library, same data model — the anonymous layer above doesn't change at all).
 
@@ -92,11 +94,11 @@ Two identity layers, intentionally separate:
 Implement as server actions where it fits the App Router flow; expose route handlers (`/api/...`) where an external/native client will eventually need them (keep these clean and documented for the future mobile app).
 
 - `createPoll(input)` → `{ slug }`. Validates 1 question + 2–N options; generates slug.
-- `getPoll(slug)` → poll + ordered options + `{ hasVoted, viewerVote }` for the current identity. Respects `hide_results`.
+- `getPoll(slug)` → poll + ordered options + `{ hasVoted, viewerVote }` for the current identity. Respects `hide_results`. When `show_voters` is on (and results aren't hidden), each option also carries its voters `[{ name, isYou }]`.
 - `castVote({ pollId, optionIds, voterName? })` → updated counts. Enforces all integrity rules above; rejects on closed/expired polls; enforces `require_name`.
 - `getResults(slug)` → `{ options: [{id, label, vote_count}], total }`. Cheap; used for live polling.
 - `listMyPolls()` → polls owned by the current `user_id` or `creator_token`.
-- `closePoll(id)`, `deletePoll(id)`, `updatePoll(id, patch)` → owner-only.
+- `closePoll(id)`, `deletePoll(id)`, `updatePoll(id, patch)` → owner-only. `updatePoll` edits the question, settings, and close date anytime; **options lock once the first vote lands** (edit them before sharing, or close and start fresh). It also refuses to turn `show_voters` on after voting has started (see §4).
 - Auth routes/handlers provided by Neon Auth (its Next.js SDK).
 
 **Rate limiting:** apply per-IP limits on `castVote` and `createPoll` (Cloudflare provides the IP). This plus the token dedup is the v1 anti-abuse story.
@@ -114,9 +116,10 @@ Implement as server actions where it fits the App Router flow; expose route hand
 
 ## 8. Features and screens (match the mock)
 
-- **Vote screen:** question, meta (open/closed, closes-in), options as selectable cards (highlighter swipe on the chosen one), optional name field, "Cast vote," running count.
-- **Results screen:** bars + tabular-mono percentages, total votes, "you voted X," share row. Honor `hide_results` until the viewer votes.
-- **Create screen:** question input, add/remove/reorder options, settings toggles (allow multiple, require name, hide results until voted, auto-close date), "Create poll."
+- **Vote screen:** question, meta (open/closed, closes-in), options as selectable cards (highlighter swipe on the chosen one), optional name field, "Cast vote," running count. When `show_voters` is on, the name field carries a disclosure ("Your name will be shown with your answer"). Owners see an owner-controls bar here (edit / close / delete).
+- **Results screen:** bars + tabular-mono percentages, total votes, "you voted X," share row. Honor `hide_results` until the viewer votes. When `show_voters` is on, each bar carries a roster of voter-name chips (your own chip gets the highlighter); long rosters collapse behind a `+N more` toggle.
+- **Create screen:** question input, add/remove/reorder options, settings toggles (allow multiple, require name, show who voted, hide results until voted, auto-close date), "Create poll." Enabling "show who voted" auto-locks "require a name" on.
+- **Edit screen:** owner-only, prefilled from the poll. Same fields as create; options are read-only once voting has started, and "show who voted" can't be switched on after the first vote.
 - **Dashboard ("my polls"):** list of owned polls with status, quick actions (open results, close, edit, delete, copy link).
 - **Marketing landing:** the hero from the mock — headline, subhead, primary CTA ("Start a poll"), and a live mini-result. SEO-first.
 
