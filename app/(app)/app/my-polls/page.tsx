@@ -19,7 +19,7 @@ export default async function MyPollsPage() {
             My polls
           </h1>
           <p className="mt-1 text-sm text-ink-soft">
-            Polls you&apos;ve started. Open, close, or delete.
+            Polls you&apos;ve started. Open, edit, close, or delete.
           </p>
         </div>
         <Link

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Trash2 } from "lucide-react";
+import { Lock, Pencil, Trash2 } from "lucide-react";
 import { closePoll, deletePoll } from "@/lib/polls";
 import type { MyPollRow } from "@/lib/polls-read";
 
@@ -71,6 +71,13 @@ export function PollRow({ row }: { row: MyPollRow }) {
           className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-[filter,transform] hover:-translate-y-px hover:brightness-110"
         >
           Open
+        </Link>
+        <Link
+          href={`/p/${row.slug}/edit`}
+          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3.5 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary"
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+          Edit
         </Link>
         {!row.isClosed && (
           <button
