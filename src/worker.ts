@@ -67,6 +67,21 @@ function canonicalRedirect(request: Request): Response | null {
   const host = url.host.toLowerCase();
   const path = url.pathname;
 
+  // A logged-in visitor hitting the site root wants their polls, not the
+  // marketing pitch (and the pitch shows a confusing "Sign in" to them, since
+  // the marketing header is statically cached and never checks the session).
+  // Bounce them to the app. This is a TEMPORARY (302) redirect, deliberately
+  // NOT the permanent 308 used for host canonicalization: it's conditional on
+  // auth state, so caching it would strand the user on /app after they sign
+  // out. Anonymous visitors (and crawlers) have no session cookie, fall
+  // through, and get the cached marketing page — so SEO is untouched.
+  const KNOWN_HOSTS = [MARKETING_HOST, WWW_HOST, APP_HOST];
+  if (path === "/" && KNOWN_HOSTS.includes(host) && hasSession(request)) {
+    url.host = APP_HOST;
+    url.pathname = "/app";
+    return redirectTemporary(url.toString());
+  }
+
   // www.pollpotato.com is not a canonical host. Route straight to the right
   // bare-domain host based on path so the user only sees one 308, not two.
   if (host === WWW_HOST) {
@@ -104,6 +119,32 @@ function redirect308(location: string): Response {
       "Cache-Control": "no-store",
     },
   });
+}
+
+/** 302 (temporary) + no-store, for redirects that depend on request state. */
+function redirectTemporary(location: string): Response {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: location,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+/**
+ * True when the request carries a Neon Auth session cookie. Neon Auth (Better
+ * Auth under the hood) names the session cookie `__Secure-neon-auth.session_token`
+ * — we substring-match `neon-auth.session_token` so we also catch its chunked
+ * `.0`/`.1` variants, without matching the transient OAuth
+ * `...session_challange` or the `...local.session_data` cookies. This is a
+ * presence check only: an expired cookie still redirects to /app, where the
+ * app layout does the real session lookup and renders the signed-out view.
+ * That edge is accepted in exchange for keeping this a zero-cost edge check.
+ */
+function hasSession(request: Request): boolean {
+  const cookie = request.headers.get("Cookie");
+  return !!cookie && cookie.includes("neon-auth.session_token");
 }
 
 // Host-specific robots.txt for the app subdomain. Next's robots.ts is
