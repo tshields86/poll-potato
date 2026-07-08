@@ -12,6 +12,7 @@ type Settings = {
   allowMultiple: boolean;
   requireName: boolean;
   hideResults: boolean;
+  showVoters: boolean;
   closesAt: string;
 };
 
@@ -25,6 +26,7 @@ export function CreateForm() {
     allowMultiple: false,
     requireName: false,
     hideResults: false,
+    showVoters: false,
     closesAt: "",
   });
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,7 @@ export function CreateForm() {
         allowMultiple: settings.allowMultiple,
         requireName: settings.requireName,
         hideResults: settings.hideResults,
+        showVoters: settings.showVoters,
         closesAt: settings.closesAt || null,
       });
       if ("error" in result) {
@@ -161,9 +164,27 @@ export function CreateForm() {
         <Toggle
           id="require-name"
           label="Require a name"
-          hint="No anonymous votes"
+          hint={
+            settings.showVoters
+              ? "On — showing who voted needs a name"
+              : "No anonymous votes"
+          }
           checked={settings.requireName}
+          disabled={settings.showVoters}
           onChange={(v) => setSettings((s) => ({ ...s, requireName: v }))}
+        />
+        <Toggle
+          id="show-voters"
+          label="Show who voted"
+          hint="Everyone sees each person's answer"
+          checked={settings.showVoters}
+          onChange={(v) =>
+            setSettings((s) => ({
+              ...s,
+              showVoters: v,
+              requireName: v ? true : s.requireName,
+            }))
+          }
         />
         <Toggle
           id="hide-results"

@@ -27,6 +27,7 @@ export type CreatePollInput = {
   allowMultiple?: boolean;
   requireName?: boolean;
   hideResults?: boolean;
+  showVoters?: boolean;
   closesAt?: string | null;
 };
 
@@ -99,8 +100,11 @@ export async function createPoll(input: CreatePollInput): Promise<CreatePollResu
           creatorUserId,
           creatorToken,
           allowMultiple: !!input.allowMultiple,
-          requireName: !!input.requireName,
+          // Showing who voted only makes sense when every vote carries a name,
+          // so it forces require_name on.
+          requireName: !!input.requireName || !!input.showVoters,
           hideResults: !!input.hideResults,
+          showVoters: !!input.showVoters,
           closesAt,
         })
         .returning();

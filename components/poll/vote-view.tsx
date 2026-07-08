@@ -96,6 +96,11 @@ export function VoteView({
             required
             maxLength={50}
           />
+          {poll.showVoters && (
+            <span className="mt-2 block text-xs font-medium text-ink-soft">
+              Your name will be shown with your answer.
+            </span>
+          )}
           {errorField === "voterName" && error && (
             <p role="alert" className="mt-2 text-sm font-semibold text-destructive">{error}</p>
           )}

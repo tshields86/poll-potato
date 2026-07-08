@@ -159,6 +159,7 @@ export type EditablePoll = {
   allowMultiple: boolean;
   requireName: boolean;
   hideResults: boolean;
+  showVoters: boolean;
   closesAt: Date | null;
   hasVotes: boolean;
   isClosed: boolean;
@@ -201,6 +202,7 @@ export async function getPollForEdit(slug: string): Promise<EditablePoll | null>
     allowMultiple: p.allowMultiple,
     requireName: p.requireName,
     hideResults: p.hideResults,
+    showVoters: p.showVoters,
     closesAt: p.closesAt,
     hasVotes: !!anyVote,
     isClosed,

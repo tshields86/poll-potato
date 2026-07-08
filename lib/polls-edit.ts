@@ -24,6 +24,7 @@ export type UpdatePollPatch = {
   allowMultiple?: boolean;
   requireName?: boolean;
   hideResults?: boolean;
+  showVoters?: boolean;
   closesAt?: string | null;
   options?: { label: string }[];
 };
@@ -96,6 +97,27 @@ export async function updatePollFor(
   if (patch.allowMultiple !== undefined) updates.allowMultiple = patch.allowMultiple;
   if (patch.requireName !== undefined) updates.requireName = patch.requireName;
   if (patch.hideResults !== undefined) updates.hideResults = patch.hideResults;
+
+  if (patch.showVoters !== undefined) {
+    // Turning name-visibility ON after people have voted would retroactively
+    // expose names they gave under a different expectation — never allow it.
+    if (patch.showVoters && !target.showVoters) {
+      const anyVote = await db.query.vote.findFirst({
+        where: eq(vote.pollId, target.id),
+        columns: { id: true },
+      });
+      if (anyVote) {
+        return {
+          error:
+            "You can't reveal names once voting has started — set this when you create the poll.",
+          code: "validation",
+        };
+      }
+    }
+    updates.showVoters = patch.showVoters;
+    // Showing who voted requires a name from every voter.
+    if (patch.showVoters) updates.requireName = true;
+  }
 
   if (patch.closesAt !== undefined) {
     if (patch.closesAt === null) {
