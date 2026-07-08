@@ -100,6 +100,62 @@ export async function getPoll(slug: string): Promise<PollView | null> {
   };
 }
 
+export type EditablePoll = {
+  id: string;
+  slug: string;
+  question: string;
+  options: string[];
+  allowMultiple: boolean;
+  requireName: boolean;
+  hideResults: boolean;
+  closesAt: Date | null;
+  hasVotes: boolean;
+  isClosed: boolean;
+};
+
+/**
+ * Poll data for the owner's edit screen. Returns null when the poll doesn't
+ * exist OR the viewer isn't its owner (edit is owner-only). `hasVotes` mirrors
+ * the backend rule that options lock once the first vote lands.
+ */
+export async function getPollForEdit(slug: string): Promise<EditablePoll | null> {
+  const p = await db.query.poll.findFirst({ where: eq(poll.slug, slug) });
+  if (!p) return null;
+
+  const identity = await getIdentity();
+  const isOwner =
+    (identity.kind === "user" && p.creatorUserId === identity.userId) ||
+    (!!identity.creatorToken && p.creatorToken === identity.creatorToken);
+  if (!isOwner) return null;
+
+  const options = await db.query.pollOption.findMany({
+    where: eq(pollOption.pollId, p.id),
+    orderBy: (o) => asc(o.position),
+    columns: { label: true },
+  });
+  const anyVote = await db.query.vote.findFirst({
+    where: eq(vote.pollId, p.id),
+    columns: { id: true },
+  });
+
+  const isClosed =
+    p.status === "closed" ||
+    (!!p.closesAt && p.closesAt.getTime() <= Date.now());
+
+  return {
+    id: p.id,
+    slug: p.slug,
+    question: p.question,
+    options: options.map((o) => o.label),
+    allowMultiple: p.allowMultiple,
+    requireName: p.requireName,
+    hideResults: p.hideResults,
+    closesAt: p.closesAt,
+    hasVotes: !!anyVote,
+    isClosed,
+  };
+}
+
 // Re-export raw types for places that read poll without view normalization.
 export type { Poll, PollOption };
 
