@@ -3,6 +3,7 @@ import { getPoll } from "@/lib/polls-read";
 import { ShareUrl } from "@/components/poll/share-url";
 import { VoteView } from "@/components/poll/vote-view";
 import { ResultsView } from "@/components/poll/results-view";
+import { OwnerControls } from "@/components/poll/owner-controls";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,15 @@ export default async function PollPage({
       <div className="mt-6">
         {showResults ? <ResultsView poll={poll} /> : <VoteView poll={poll} />}
       </div>
+
+      {poll.isOwner && (
+        <OwnerControls
+          pollId={poll.id}
+          slug={poll.slug}
+          question={poll.question}
+          isClosed={poll.isClosed}
+        />
+      )}
     </section>
   );
 }
