@@ -30,7 +30,11 @@ export function ResultsView({ poll }: { poll: PollView }) {
       isClosed: poll.isClosed,
       resultsHidden: poll.resultsHidden,
       total: poll.totalVotes,
-      options: poll.options.map((o) => ({ id: o.id, voteCount: o.voteCount })),
+      options: poll.options.map((o) => ({
+        id: o.id,
+        voteCount: o.voteCount,
+        voters: o.voters,
+      })),
     }),
     [poll],
   );
