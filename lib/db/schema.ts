@@ -23,6 +23,9 @@ export const poll = pgTable(
     allowMultiple: boolean("allow_multiple").notNull().default(false),
     requireName: boolean("require_name").notNull().default(false),
     hideResults: boolean("hide_results").notNull().default(false),
+    // Surface each voter's name alongside their answer in results. Only
+    // meaningful with requireName (enforced at the mutation layer).
+    showVoters: boolean("show_voters").notNull().default(false),
     status: text("status").notNull().default("open"),
     closesAt: timestamp("closes_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })

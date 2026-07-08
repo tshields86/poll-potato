@@ -1,0 +1,1 @@
+ALTER TABLE "poll" ADD COLUMN "show_voters" boolean DEFAULT false NOT NULL;
