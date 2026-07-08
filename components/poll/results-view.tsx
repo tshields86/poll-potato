@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { PollView } from "@/lib/polls-read";
+import type { OptionVoter, PollView } from "@/lib/polls-read";
 import type { ResultsSnapshot } from "@/lib/polls-read";
 import { useLivePolling } from "@/lib/hooks/use-live-polling";
 import { useCountUp } from "@/lib/hooks/use-count-up";
@@ -65,6 +65,7 @@ export function ResultsView({ poll }: { poll: PollView }) {
 
   const total = live.total ?? 0;
   const counts = new Map(live.options.map((o) => [o.id, o.voteCount ?? 0]));
+  const voters = new Map(live.options.map((o) => [o.id, o.voters]));
   const max = Math.max(0, ...Array.from(counts.values()));
   const votedLabels = poll.options
     .filter((o) => viewerVote.includes(o.id))
@@ -90,6 +91,7 @@ export function ResultsView({ poll }: { poll: PollView }) {
               label={o.label}
               percent={pct}
               win={win}
+              voters={voters.get(o.id) ?? null}
             />
           );
         })}
@@ -123,10 +125,12 @@ function ResultRow({
   label,
   percent,
   win,
+  voters,
 }: {
   label: string;
   percent: number;
   win: boolean;
+  voters: OptionVoter[] | null;
 }) {
   const animatedPct = useCountUp(percent);
   const displayPct = Math.round(animatedPct);
@@ -157,6 +161,52 @@ function ResultRow({
           style={{ width: `${animatedPct}%` }}
         />
       </div>
+      {voters && voters.length > 0 && <VoterChips voters={voters} />}
     </li>
+  );
+}
+
+const CHIP_CAP = 6;
+
+function VoterChips({ voters }: { voters: OptionVoter[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const overflow = voters.length - CHIP_CAP;
+
+  let visible = voters;
+  if (!expanded && overflow > 0) {
+    visible = voters.slice(0, CHIP_CAP);
+    // Always keep the viewer's own chip in view, even if it sorts past the cap.
+    const youIndex = voters.findIndex((v) => v.isYou);
+    if (youIndex >= CHIP_CAP) visible = [...visible.slice(0, -1), voters[youIndex]];
+  }
+
+  return (
+    <ul className="mt-2 flex flex-wrap gap-1.5">
+      {visible.map((v, i) => (
+        <li
+          key={`${v.name}-${i}`}
+          className={cn(
+            "rounded-full px-2.5 py-1 text-xs font-semibold",
+            v.isYou
+              ? "bg-mark font-bold text-mark-ink"
+              : "bg-primary-soft text-ink",
+          )}
+        >
+          {v.name}
+          {v.isYou && " (you)"}
+        </li>
+      ))}
+      {overflow > 0 && (
+        <li>
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            className="rounded-full border border-line bg-paper px-2.5 py-1 text-xs font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+          >
+            {expanded ? "Show less" : `+${overflow} more`}
+          </button>
+        </li>
+      )}
+    </ul>
   );
 }
