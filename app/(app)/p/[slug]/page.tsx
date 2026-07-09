@@ -29,6 +29,18 @@ export async function generateMetadata({
     ? "See how the group voted."
     : "Cast your vote — share the link, settle it fast.";
   const url = `/p/${slug}`;
+  // Defining openGraph here shadows the root app/opengraph-image.png file
+  // convention, so the branded card has to be attached explicitly or shared
+  // poll links unfurl with no image. Resolved against metadataBase
+  // (pollpotato.com), where the 1200×630 PNG is served. Same card for every
+  // poll — per-poll images would need runtime image generation, which next/og
+  // can't do on Workers.
+  const ogImage = {
+    url: "/opengraph-image.png",
+    width: 1200,
+    height: 630,
+    alt: "PollPotato",
+  };
   return {
     title: poll.question,
     description,
@@ -38,11 +50,13 @@ export async function generateMetadata({
       url,
       siteName: "PollPotato",
       type: "website",
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: socialTitle,
       description,
+      images: [ogImage],
     },
     alternates: { canonical: url },
   };
