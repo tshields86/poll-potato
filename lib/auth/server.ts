@@ -20,5 +20,13 @@ export const auth = createNeonAuth({
     // Without this, signing up on the marketing host leaves the user
     // "signed out" on the app subdomain (where every actual flow lives).
     domain: process.env.NODE_ENV === "production" ? ".pollpotato.com" : undefined,
+    // Neon Auth defaults to SameSite=Strict, which drops the session cookie on
+    // any navigation arriving from another context — following a shared/poll
+    // link, the OAuth return hop, or opening the app from Messages/email. The
+    // result is a signed-in user rendered signed-out (no "My polls", votes not
+    // recognized), most visibly on mobile. Lax still blocks cross-site POST
+    // CSRF but sends the cookie on top-level link navigations, which is what a
+    // session cookie needs.
+    sameSite: "lax",
   },
 });
