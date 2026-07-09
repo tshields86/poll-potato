@@ -24,13 +24,14 @@ export default async function AppLayout({
     <div className="flex min-h-dvh flex-col bg-paper text-ink">
       <header className="flex items-center gap-3 border-b border-line bg-surface px-[clamp(14px,4vw,56px)] py-4 sm:gap-4 sm:py-5">
         <Link href="/app" aria-label="PollPotato app">
-          <Wordmark />
+          {/* Icon-only on mobile so the "My polls" nav link fits the header. */}
+          <Wordmark textClassName="hidden sm:inline" />
         </Link>
         {user && (
-          <nav className="hidden items-center gap-1 sm:flex">
+          <nav className="flex items-center gap-1">
             <Link
               href="/app/my-polls"
-              className="rounded-full px-3 py-1.5 text-sm font-semibold text-ink-soft hover:text-ink"
+              className="rounded-full px-2.5 py-1.5 text-sm font-semibold text-ink-soft hover:text-ink sm:px-3"
             >
               My polls
             </Link>

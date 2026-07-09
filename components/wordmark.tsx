@@ -1,6 +1,13 @@
 import { cn } from "@/lib/utils";
 
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({
+  className,
+  textClassName,
+}: {
+  className?: string;
+  /** Extra classes on the "PollPotato" text — e.g. hide it on mobile. */
+  textClassName?: string;
+}) {
   return (
     <div
       className={cn(
@@ -22,7 +29,7 @@ export function Wordmark({ className }: { className?: string }) {
           className="absolute left-[9px] top-[13.5px] block h-[4px] w-[7px] rounded-b-[7px] border-b-2 border-mark"
         />
       </span>
-      PollPotato
+      <span className={textClassName}>PollPotato</span>
     </div>
   );
 }
