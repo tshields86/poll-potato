@@ -14,9 +14,13 @@ import { VoteView } from "@/components/poll/vote-view";
 export function ResultsView({
   poll,
   viewerName = "",
+  onBackToVote,
 }: {
   poll: PollView;
   viewerName?: string;
+  // When set, this results view is a pre-vote peek: the footer returns to the
+  // parent's vote form instead of opening the inline "change my vote" editor.
+  onBackToVote?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   // Optimistic vote shown after the user updates from edit mode — router.refresh()
@@ -117,10 +121,10 @@ export function ResultsView({
         {!poll.isClosed && (
           <button
             type="button"
-            onClick={() => setEditing(true)}
+            onClick={onBackToVote ?? (() => setEditing(true))}
             className="font-sans font-bold text-primary hover:underline underline-offset-4"
           >
-            Change my vote
+            {onBackToVote ? "Back to voting" : "Change my vote"}
           </button>
         )}
       </div>

@@ -3,6 +3,7 @@ import { getPoll } from "@/lib/polls-read";
 import { auth } from "@/lib/auth/server";
 import { ShareUrl } from "@/components/poll/share-url";
 import { VoteView } from "@/components/poll/vote-view";
+import { VotePanel } from "@/components/poll/vote-panel";
 import { ResultsView } from "@/components/poll/results-view";
 import { OwnerControls } from "@/components/poll/owner-controls";
 
@@ -79,7 +80,9 @@ export default async function PollPage({
   const { data: session } = await auth.getSession();
   const viewerName = session?.user?.name ?? "";
 
-  const showResults = poll.isClosed || (poll.hasVoted && !poll.resultsHidden);
+  // Show results outright once the poll closes or the viewer has voted (a vote
+  // always makes results visible, so `hasVoted` already implies not-hidden).
+  const showResults = poll.isClosed || poll.hasVoted;
   const closesIn = poll.closesAt ? formatDistanceToFuture(poll.closesAt) : null;
 
   return (
@@ -113,8 +116,12 @@ export default async function PollPage({
       <div className="mt-6">
         {showResults ? (
           <ResultsView poll={poll} viewerName={viewerName} />
-        ) : (
+        ) : poll.resultsHidden ? (
+          // Results are hidden until this viewer votes — no peeking.
           <VoteView poll={poll} initialName={viewerName} />
+        ) : (
+          // Results are public; lead with the vote form but let them peek.
+          <VotePanel poll={poll} viewerName={viewerName} />
         )}
       </div>
 

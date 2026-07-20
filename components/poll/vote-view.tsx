@@ -12,10 +12,12 @@ export function VoteView({
   poll,
   initialName = "",
   onSuccess,
+  onViewResults,
 }: {
   poll: PollView;
   initialName?: string;
   onSuccess?: (viewerVote: string[]) => void;
+  onViewResults?: () => void;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>(poll.viewerVote);
@@ -120,10 +122,24 @@ export function VoteView({
         <Button type="submit" fullWidth disabled={pending}>
           {pending ? "Casting…" : poll.hasVoted ? "Update vote" : "Cast vote"}
         </Button>
-        {poll.totalVotes !== null && (
-          <p className="mt-3 text-center font-mono text-xs text-ink-soft">
-            {poll.totalVotes} {poll.totalVotes === 1 ? "vote" : "votes"} so far
-          </p>
+        {(poll.totalVotes !== null || onViewResults) && (
+          <div className="mt-3 flex items-center justify-center gap-3 font-mono text-xs text-ink-soft">
+            {poll.totalVotes !== null && (
+              <span>
+                {poll.totalVotes} {poll.totalVotes === 1 ? "vote" : "votes"} so
+                far
+              </span>
+            )}
+            {onViewResults && (
+              <button
+                type="button"
+                onClick={onViewResults}
+                className="font-sans font-bold text-primary hover:underline underline-offset-4"
+              >
+                View results
+              </button>
+            )}
+          </div>
         )}
       </div>
     </form>
