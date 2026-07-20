@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, poll, pollOption, vote, type Poll } from "./db";
+import { ownsPoll } from "./ownership";
 
 const MAX_QUESTION = 200;
 const MAX_OPTION = 100;
@@ -33,9 +34,7 @@ function isOwnerOf(
   p: Pick<Poll, "creatorUserId" | "creatorToken">,
   id: OwnerIdentity,
 ): boolean {
-  if (id.userId && p.creatorUserId === id.userId) return true;
-  if (id.creatorToken && p.creatorToken === id.creatorToken) return true;
-  return false;
+  return ownsPoll(p, id);
 }
 
 export async function closePollFor(

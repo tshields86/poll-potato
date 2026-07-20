@@ -1,6 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db, poll, pollOption, vote, type Poll, type PollOption } from "./db";
 import { getIdentity, type Identity } from "./identity";
+import { ownsPoll } from "./ownership";
 
 export type OptionVoter = {
   name: string;
@@ -81,18 +82,20 @@ export async function getPoll(slug: string): Promise<PollView | null> {
   });
 
   const identity = await getIdentity();
-  let isOwner = false;
-  let viewerVoteRows: { optionId: string }[] = [];
+  const isOwner = ownsPoll(p, {
+    userId: identity.kind === "user" ? identity.userId : null,
+    creatorToken: identity.creatorToken,
+  });
 
+  // The viewer's own votes — independent of ownership, keyed on whichever
+  // identity they hold (account when signed in, voter cookie otherwise).
+  let viewerVoteRows: { optionId: string }[] = [];
   if (identity.kind === "user") {
-    isOwner = p.creatorUserId === identity.userId;
     viewerVoteRows = await db.query.vote.findMany({
       where: and(eq(vote.pollId, p.id), eq(vote.userId, identity.userId)),
       columns: { optionId: true },
     });
   } else if (identity.voterToken) {
-    isOwner =
-      !!identity.creatorToken && p.creatorToken === identity.creatorToken;
     viewerVoteRows = await db.query.vote.findMany({
       where: and(
         eq(vote.pollId, p.id),
@@ -175,9 +178,10 @@ export async function getPollForEdit(slug: string): Promise<EditablePoll | null>
   if (!p) return null;
 
   const identity = await getIdentity();
-  const isOwner =
-    (identity.kind === "user" && p.creatorUserId === identity.userId) ||
-    (!!identity.creatorToken && p.creatorToken === identity.creatorToken);
+  const isOwner = ownsPoll(p, {
+    userId: identity.kind === "user" ? identity.userId : null,
+    creatorToken: identity.creatorToken,
+  });
   if (!isOwner) return null;
 
   const options = await db.query.pollOption.findMany({
@@ -237,10 +241,15 @@ export async function listMyPolls(): Promise<MyPollRow[]> {
   if (!userId && !creatorToken) return [];
 
   const owned = await db.query.poll.findMany({
-    where: (p, { eq, or }) => {
+    where: (p, { eq, or, and, isNull }) => {
       const clauses = [];
       if (userId) clauses.push(eq(p.creatorUserId, userId));
-      if (creatorToken) clauses.push(eq(p.creatorToken, creatorToken));
+      // The creator cookie only owns polls no account has claimed — mirrors
+      // `ownsPoll`, so a signed-out browser doesn't list account-owned polls.
+      if (creatorToken)
+        clauses.push(
+          and(eq(p.creatorToken, creatorToken), isNull(p.creatorUserId)),
+        );
       return clauses.length === 1 ? clauses[0] : or(...clauses);
     },
     orderBy: (p, { desc }) => desc(p.createdAt),
